@@ -2,7 +2,9 @@
 title: "Methylation test data for sample ABLG 47625"
 author: "charles-gumbi"
 date: "2025-08-07"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 # Loading packages 
@@ -14,13 +16,15 @@ library(dplyr)
 library(readr)
 ```
 
-#  Read methylation data calls  
-```{r da}
+# Reading methylation data calls  
+
+```{r loading data}
 df <- read.delim("~/pop_methylation/Methyl47625/ABLG47625_composite_genome/em-seq_output/methylDackelExtracts/mbias/ABLG-47625_1_combined_mbias.tsv", sep = "\t", header = TRUE)
 ctrls <- read.delim("~/pop_methylation/Methyl47625/ABLG47625_controls_genome/em-seq_output/methylDackelExtracts/mbias/ABLG-47625_1_combined_mbias.tsv", sep = "\t", header = TRUE)
 ```
 
-# Summarized methylation by context from pop genome aligned reads 
+# Summarizing context-specific methylation from pop genome alignments
+
 ```{r methylation_pop_aligned}
 methylation_summary <- df %>%
   group_by(context) %>%
@@ -39,14 +43,13 @@ ggplot(methylation_summary, aes(x = context, y = percent_methylation, fill = con
   geom_bar(stat = "identity") +
   ylab("Methylation (%)") +
   xlab("Context") +
-  ggtitle("Methylation Percentage Across Sequence Contexts (Pop Genome Alignment)") +
+  ggtitle("Methylation ercentage across sequence contexts (Pop Genome Alignment)") +
   scale_fill_manual(values = c("CpG" = "#1f77b4", "CHG" = "#2ca02c", "CHH" = "#d62728")) +
   theme_minimal()
 ```
 
+# Summarizing context-specific methylation from control genome alignments
 
-
-# Summarize methylation by context from control genome aligned reads
 ```{r methylation_controls_aligned}
 ctrl_methylation_summary <- ctrls %>%
   group_by(context) %>%
@@ -70,8 +73,8 @@ ggplot(ctrl_methylation_summary, aes(x = context, y = percent_methylation, fill 
   theme_minimal()
 ```
 
+# Summarizing control-specific methylation from control genome alignments 
 
-# summerizing pecentatge methylation based on coontrols 
 ```{r controls_methylation}
 # Summarize methylation by control
 methylation_by_chr <- ctrls %>%
