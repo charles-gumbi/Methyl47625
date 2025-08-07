@@ -1,0 +1,121 @@
+<!--
+  ~ Copyright 2013-2024, Seqera Labs
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<html>
+<head>
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
+</head>
+<body>
+<pre class="mermaid" style="text-align: center;">
+%%{
+  init: {
+    'theme': 'base',
+    'themeVariables': {
+      'primaryColor': '#B6ECE2',
+      'primaryTextColor': '#160F26',
+      'primaryBorderColor': '#065647',
+      'lineColor': '#545555',
+      'clusterBkg': '#BABCBD22',
+      'clusterBorder': '#DDDEDE',
+      'fontFamily': 'arial'
+    }
+  }
+}%%
+flowchart TB
+    subgraph " "
+    v0["filename"]
+    v3["Channel.fromPath"]
+    end
+    subgraph "create_placeholder [create_placeholder]"
+    v1(["touchFile"])
+    end
+    v2(["bwa_index"])
+    subgraph " "
+    v7[" "]
+    v16[" "]
+    v17[" "]
+    v19[" "]
+    v21[" "]
+    v23[" "]
+    v24[" "]
+    v60[" "]
+    end
+    v8(["enough_reads"])
+    v14(["send_email"])
+    v15(["alignReads"])
+    v18(["mergeAndMarkDuplicates"])
+    v20(["methylDackel_extract"])
+    v22(["methylDackel_mbias"])
+    v25(["gc_bias"])
+    v26(["idx_stats"])
+    v27(["flag_stats"])
+    v28(["fastqc"])
+    v29(["insert_size_metrics"])
+    v30(["picard_metrics"])
+    v31(["tasmanian"])
+    v59(["multiqc"])
+    v4(( ))
+    v9(( ))
+    v11(( ))
+    v0 --> v1
+    v2 --> v15
+    v2 --> v20
+    v2 --> v22
+    v2 --> v25
+    v2 --> v30
+    v2 --> v31
+    v3 --> v4
+    v4 --> v7
+    v4 --> v8
+    v8 --> v9
+    v8 --> v11
+    v11 --> v14
+    v9 --> v15
+    v15 --> v17
+    v15 --> v16
+    v15 --> v18
+    v15 --> v4
+    v18 --> v20
+    v18 --> v19
+    v18 --> v22
+    v18 --> v25
+    v18 --> v26
+    v18 --> v27
+    v18 --> v28
+    v18 --> v29
+    v18 --> v30
+    v18 --> v31
+    v18 --> v4
+    v20 --> v21
+    v22 --> v24
+    v22 --> v23
+    v22 --> v4
+    v25 --> v4
+    v26 --> v4
+    v27 --> v4
+    v28 --> v4
+    v29 --> v4
+    v30 --> v4
+    v31 --> v4
+    v4 --> v59
+    v59 --> v60
+
+</pre>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, maxTextSize: Number.MAX_SAFE_INTEGER, maxEdges: Number.MAX_SAFE_INTEGER });
+</script>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<svg height="660" width="660"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:ev="http://www.w3.org/2001/xml-events">
+<title>Original Bottom Strand</title>
+<rect x="0" y="0" width="660" height="660" fill="white" />
+<text x="330" y="20" text-anchor="middle">Original Bottom Strand ABLG-47625_chn_OB.svg phage_lambda CHN </text>
+<line x1="80" y1="80" x2="80" y2="580" stroke="black" />
+<line x1="80" y1="580" x2="580" y2="580" stroke="black" />
+<text x="15" y="330" transform="rotate(270 15, 330)" text-anchor="middle" dominant-baseline="text-before-edge">CHG/CHH Methylation %</text>
+<text x="330" y="620" text-anchor="middle">Position along mapped read (5'->3' of + strand)</text>
+<line x1="80" y1="580" x2="80" y2="585" stroke="black" />
+<text x="80" y="600" text-anchor="middle">0</text>
+<line x1="146.666667" y1="80" x2="146.666667" y2="580" stroke-dasharray="5 5" stroke="grey" />
+<line x1="146.666667" y1="580" x2="146.666667" y2="585" stroke="black" />
+<text x="146.666667" y="600" text-anchor="middle">10</text>
+<line x1="213.333333" y1="80" x2="213.333333" y2="580" stroke-dasharray="5 5" stroke="grey" />
+<line x1="213.333333" y1="580" x2="213.333333" y2="585" stroke="black" />
+<text x="213.333333" y="600" text-anchor="middle">20</text>
+<line x1="280.000000" y1="80" x2="280.000000" y2="580" stroke-dasharray="5 5" stroke="grey" />
+<line x1="280.000000" y1="580" x2="280.000000" y2="585" stroke="black" />
+<text x="280.000000" y="600" text-anchor="middle">30</text>
+<line x1="346.666667" y1="80" x2="346.666667" y2="580" stroke-dasharray="5 5" stroke="grey" />
+<line x1="346.666667" y1="580" x2="346.666667" y2="585" stroke="black" />
+<text x="346.666667" y="600" text-anchor="middle">40</text>
+<line x1="413.333333" y1="80" x2="413.333333" y2="580" stroke-dasharray="5 5" stroke="grey" />
+<line x1="413.333333" y1="580" x2="413.333333" y2="585" stroke="black" />
+<text x="413.333333" y="600" text-anchor="middle">50</text>
+<line x1="480.000000" y1="80" x2="480.000000" y2="580" stroke-dasharray="5 5" stroke="grey" />
+<line x1="480.000000" y1="580" x2="480.000000" y2="585" stroke="black" />
+<text x="480.000000" y="600" text-anchor="middle">60</text>
+<line x1="546.666667" y1="80" x2="546.666667" y2="580" stroke-dasharray="5 5" stroke="grey" />
+<line x1="546.666667" y1="580" x2="546.666667" y2="585" stroke="black" />
+<text x="546.666667" y="600" text-anchor="middle">70</text>
+<line x1="80" y1="580.000000" x2="75" y2="580.000000" stroke="black" />
+<text x="55" y="580.000000" text-anchor="middle" dominant-baseline="middle">0.00</text>
+<line x1="80" y1="555.000000" x2="75" y2="555.000000" stroke="black" />
+<text x="55" y="555.000000" text-anchor="middle" dominant-baseline="middle">0.05</text>
+<line x1="80" y1="530.000000" x2="75" y2="530.000000" stroke="black" />
+<text x="55" y="530.000000" text-anchor="middle" dominant-baseline="middle">0.10</text>
+<line x1="80" y1="505.000000" x2="75" y2="505.000000" stroke="black" />
+<text x="55" y="505.000000" text-anchor="middle" dominant-baseline="middle">0.15</text>
+<line x1="80" y1="480.000000" x2="75" y2="480.000000" stroke="black" />
+<text x="55" y="480.000000" text-anchor="middle" dominant-baseline="middle">0.20</text>
+<line x1="80" y1="455.000000" x2="75" y2="455.000000" stroke="black" />
+<text x="55" y="455.000000" text-anchor="middle" dominant-baseline="middle">0.25</text>
+<line x1="80" y1="430.000000" x2="75" y2="430.000000" stroke="black" />
+<text x="55" y="430.000000" text-anchor="middle" dominant-baseline="middle">0.30</text>
+<line x1="80" y1="405.000000" x2="75" y2="405.000000" stroke="black" />
+<text x="55" y="405.000000" text-anchor="middle" dominant-baseline="middle">0.35</text>
+<line x1="80" y1="380.000000" x2="75" y2="380.000000" stroke="black" />
+<text x="55" y="380.000000" text-anchor="middle" dominant-baseline="middle">0.40</text>
+<line x1="80" y1="355.000000" x2="75" y2="355.000000" stroke="black" />
+<text x="55" y="355.000000" text-anchor="middle" dominant-baseline="middle">0.45</text>
+<line x1="80" y1="330.000000" x2="75" y2="330.000000" stroke="black" />
+<text x="55" y="330.000000" text-anchor="middle" dominant-baseline="middle">0.50</text>
+<line x1="80" y1="305.000000" x2="75" y2="305.000000" stroke="black" />
+<text x="55" y="305.000000" text-anchor="middle" dominant-baseline="middle">0.55</text>
+<line x1="80" y1="280.000000" x2="75" y2="280.000000" stroke="black" />
+<text x="55" y="280.000000" text-anchor="middle" dominant-baseline="middle">0.60</text>
+<line x1="80" y1="255.000000" x2="75" y2="255.000000" stroke="black" />
+<text x="55" y="255.000000" text-anchor="middle" dominant-baseline="middle">0.65</text>
+<line x1="80" y1="230.000000" x2="75" y2="230.000000" stroke="black" />
+<text x="55" y="230.000000" text-anchor="middle" dominant-baseline="middle">0.70</text>
+<line x1="80" y1="205.000000" x2="75" y2="205.000000" stroke="black" />
+<text x="55" y="205.000000" text-anchor="middle" dominant-baseline="middle">0.75</text>
+<line x1="80" y1="180.000000" x2="75" y2="180.000000" stroke="black" />
+<text x="55" y="180.000000" text-anchor="middle" dominant-baseline="middle">0.80</text>
+<line x1="80" y1="155.000000" x2="75" y2="155.000000" stroke="black" />
+<text x="55" y="155.000000" text-anchor="middle" dominant-baseline="middle">0.85</text>
+<line x1="80" y1="130.000000" x2="75" y2="130.000000" stroke="black" />
+<text x="55" y="130.000000" text-anchor="middle" dominant-baseline="middle">0.90</text>
+<line x1="80" y1="105.000000" x2="75" y2="105.000000" stroke="black" />
+<text x="55" y="105.000000" text-anchor="middle" dominant-baseline="middle">0.95</text>
+<line x1="80" y1="80.000000" x2="75" y2="80.000000" stroke="black" />
+<text x="55" y="80.000000" text-anchor="middle" dominant-baseline="middle">1.00</text>
+<path d="M 86.666667 580.000000
+  L 173.333333 547.204569
+  L 186.666667 580.000000
+  L 206.666667 580.000000
+  L 220.000000 580.000000
+  L 233.333333 580.000000
+  L 253.333333 580.000000
+  L 280.000000 580.000000
+  L 286.666667 580.000000
+  L 300.000000 580.000000
+  L 346.666667 580.000000
+  L 360.000000 580.000000
+  L 366.666667 580.000000
+  L 380.000000 580.000000
+  L 400.000000 580.000000
+  L 413.333333 580.000000
+  L 433.333333 580.000000
+  L 533.333333 580.000000
+  L 573.333333 580.000000
+  L 573.333333 112.795431
+  L 533.333333 112.795431
+  L 433.333333 112.795431
+  L 413.333333 112.795431
+  L 400.000000 112.795431
+  L 380.000000 112.795431
+  L 366.666667 112.795431
+  L 360.000000 112.795431
+  L 346.666667 112.795431
+  L 300.000000 142.102117
+  L 286.666667 112.795431
+  L 280.000000 112.795431
+  L 253.333333 112.795431
+  L 233.333333 112.795431
+  L 220.000000 112.795431
+  L 206.666667 112.795431
+  L 186.666667 112.795431
+  L 173.333333 80.000000
+  L 86.666667 112.795431
+Z" fill="rgb(248,118,109)" fill-opacity="0.2"/>
+<path d="M 86.666667 580.000000
+  L 173.333333 547.204569
+  L 186.666667 580.000000
+  L 206.666667 580.000000
+  L 220.000000 580.000000
+  L 233.333333 580.000000
+  L 253.333333 580.000000
+  L 280.000000 580.000000
+  L 286.666667 580.000000
+  L 300.000000 580.000000
+  L 346.666667 580.000000
+  L 360.000000 580.000000
+  L 366.666667 580.000000
+  L 380.000000 580.000000
+  L 400.000000 580.000000
+  L 413.333333 580.000000
+  L 433.333333 580.000000
+  L 533.333333 580.000000
+  L 573.333333 580.000000
+  L 573.333333 112.795431
+  L 533.333333 112.795431
+  L 433.333333 112.795431
+  L 413.333333 112.795431
+  L 400.000000 112.795431
+  L 380.000000 112.795431
+  L 366.666667 112.795431
+  L 360.000000 112.795431
+  L 346.666667 112.795431
+  L 300.000000 142.102117
+  L 286.666667 112.795431
+  L 280.000000 112.795431
+  L 253.333333 112.795431
+  L 233.333333 112.795431
+  L 220.000000 112.795431
+  L 206.666667 112.795431
+  L 186.666667 112.795431
+  L 173.333333 80.000000
+  L 86.666667 112.795431
+Z" fill="rgb(0,191,196)" fill-opacity="0.2"/>
+<path d="M 86.666667 580.000000
+  L 173.333333 80.000000
+  L 186.666667 580.000000
+  L 206.666667 580.000000
+  L 220.000000 580.000000
+  L 233.333333 580.000000
+  L 253.333333 580.000000
+  L 280.000000 580.000000
+  L 286.666667 580.000000
+  L 300.000000 580.000000
+  L 346.666667 580.000000
+  L 360.000000 580.000000
+  L 366.666667 580.000000
+  L 380.000000 580.000000
+  L 400.000000 580.000000
+  L 413.333333 580.000000
+  L 433.333333 580.000000
+  L 533.333333 580.000000
+  L 573.333333 580.000000
+" stroke="rgb(248,118,109)" stroke-width="2" fill-opacity="0"/>
+<path d="M 86.666667 580.000000
+  L 173.333333 80.000000
+  L 186.666667 580.000000
+  L 206.666667 580.000000
+  L 220.000000 580.000000
+  L 233.333333 580.000000
+  L 253.333333 580.000000
+  L 280.000000 580.000000
+  L 286.666667 580.000000
+  L 300.000000 580.000000
+  L 346.666667 580.000000
+  L 360.000000 580.000000
+  L 366.666667 580.000000
+  L 380.000000 580.000000
+  L 400.000000 580.000000
+  L 413.333333 580.000000
+  L 433.333333 580.000000
+  L 533.333333 580.000000
+  L 573.333333 580.000000
+" stroke="rgb(0,191,196)" stroke-width="2" fill-opacity="0"/>
+<text x="650" y="650" text-anchor="end">--OB 15,0,15,0</text>
+<line x1="180.000000" y1="580" x2="180.000000" y2="80" stroke-dasharray="5 1" stroke="rgb(248,118,109)" stroke-width="1" />
+<line x1="180.000000" y1="580" x2="180.000000" y2="80" stroke-dasharray="5 1" stroke="rgb(0,191,196)" stroke-width="1" />
+<rect x="590" y="310" width="20" height="20" fill="rgb(248,118,109)" />
+<text x="615" y="320" text-anchor="start" dominant-baseline="middle">#1</text>
+<rect x="590" y="330" width="20" height="20" fill="rgb(0,191,196)" />
+<text x="615" y="340" text-anchor="start" dominant-baseline="middle">#2</text>
+</svg>

@@ -1,0 +1,110 @@
+---
+title: "Methylation test data for sample ABLG 47625"
+author: "charles-gumbi"
+date: "2025-08-07"
+output: html_notebook
+---
+
+# Loading packages 
+```{r packages}
+library(ggplot2)
+library(dplyr)
+library(ggplot2)
+library(dplyr)
+library(readr)
+```
+
+#  Read methylation data calls  
+```{r da}
+df <- read.delim("~/pop_methylation/Methyl47625/ABLG47625_composite_genome/em-seq_output/methylDackelExtracts/mbias/ABLG-47625_1_combined_mbias.tsv", sep = "\t", header = TRUE)
+ctrls <- read.delim("~/pop_methylation/Methyl47625/ABLG47625_controls_genome/em-seq_output/methylDackelExtracts/mbias/ABLG-47625_1_combined_mbias.tsv", sep = "\t", header = TRUE)
+```
+
+# Summarized methylation by context from pop genome aligned reads 
+```{r methylation_pop_aligned}
+methylation_summary <- df %>%
+  group_by(context) %>%
+  summarise(
+    total_methylated = sum(nMethylated, na.rm = TRUE),
+    total_unmethylated = sum(nUnmethylated, na.rm = TRUE)
+  ) %>%
+  mutate(
+    percent_methylation = 100 * total_methylated / (total_methylated + total_unmethylated),
+    # Make context a factor with CpG first
+    context = factor(context, levels = c("CpG", "CHG", "CHH"))
+  )
+
+# Visualise methylation summary
+ggplot(methylation_summary, aes(x = context, y = percent_methylation, fill = context)) +
+  geom_bar(stat = "identity") +
+  ylab("Methylation (%)") +
+  xlab("Context") +
+  ggtitle("Methylation Percentage Across Sequence Contexts (Pop Genome Alignment)") +
+  scale_fill_manual(values = c("CpG" = "#1f77b4", "CHG" = "#2ca02c", "CHH" = "#d62728")) +
+  theme_minimal()
+```
+
+
+
+# Summarize methylation by context from control genome aligned reads
+```{r methylation_controls_aligned}
+ctrl_methylation_summary <- ctrls %>%
+  group_by(context) %>%
+  summarise(
+    total_methylated = sum(nMethylated, na.rm = TRUE),
+    total_unmethylated = sum(nUnmethylated, na.rm = TRUE)
+  ) %>%
+  mutate(
+    percent_methylation = 100 * total_methylated / (total_methylated + total_unmethylated),
+    # Make context a factor with CpG first
+    context = factor(context, levels = c("CpG", "CHG", "CHH"))
+  )
+
+#Visualise controls methylation summary
+ggplot(ctrl_methylation_summary, aes(x = context, y = percent_methylation, fill = context)) +
+  geom_bar(stat = "identity") +
+  ylab("Methylation (%)") +
+  xlab("Context") +
+  ggtitle("Methylation percentage across sequence contexts (Control Genome Alignment)") +
+  scale_fill_manual(values = c("CpG" = "#1f77b4", "CHG" = "#2ca02c", "CHH" = "#d62728")) +
+  theme_minimal()
+```
+
+
+# summerizing pecentatge methylation based on coontrols 
+```{r controls_methylation}
+# Summarize methylation by control
+methylation_by_chr <- ctrls %>%
+  group_by(chr) %>%
+  summarise(
+    total_methylated = sum(nMethylated, na.rm = TRUE),
+    total_unmethylated = sum(nUnmethylated, na.rm = TRUE)
+  ) %>%
+  mutate(
+    percent_methylation = 100 * total_methylated / (total_methylated + total_unmethylated)
+  )
+
+# sorting controls
+methylation_by_chr <- methylation_by_chr %>%
+  arrange(desc(percent_methylation)) %>%
+  mutate(chr = factor(chr, levels = unique(chr)))
+
+# Plot methylation percentage by chr
+ggplot(methylation_by_chr, aes(x = chr, y = percent_methylation, fill = chr)) +
+  geom_bar(stat = "identity") +
+  ylab("Methylation (%)") +
+  xlab("Control") +
+  ggtitle("Methylation percentage across sequence of controls") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = "none")  # Remove legend since chr is already on x-axis
+```
+
+
+
+
+
+
+
+
+
