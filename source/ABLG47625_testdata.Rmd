@@ -19,7 +19,7 @@ library(readr)
 # Reading methylation data calls  
 
 ```{r loading data}
-df <- read.delim("~/pop_methylation/Methyl47625/ABLG47625_composite_genome/em-seq_output/methylDackelExtracts/mbias/ABLG-47625_1_combined_mbias.tsv", sep = "\t", header = TRUE)
+df <- read.delim("~/pop_methylation/Methyl47625/ABLG47625_pop_genome/em-seq_output/methylDackelExtracts/mbias/ABLG-47625_1_combined_mbias.tsv", sep = "\t", header = TRUE)
 ctrls <- read.delim("~/pop_methylation/Methyl47625/ABLG47625_controls_genome/em-seq_output/methylDackelExtracts/mbias/ABLG-47625_1_combined_mbias.tsv", sep = "\t", header = TRUE)
 ```
 
