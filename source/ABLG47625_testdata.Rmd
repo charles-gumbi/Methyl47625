@@ -26,24 +26,25 @@ ctrls <- read.delim("~/pop_methylation/Methyl47625/ABLG47625_controls_genome/em-
 # Summarizing context-specific methylation from pop genome alignments
 
 ```{r methylation_pop_aligned}
-methylation_summary <- df %>%
+df_summary <- df %>%
   group_by(context) %>%
   summarise(
-    total_methylated = sum(nMethylated, na.rm = TRUE),
-    total_unmethylated = sum(nUnmethylated, na.rm = TRUE)
+    mean_methylation = mean(100 * nMethylated / (nMethylated + nUnmethylated), na.rm = TRUE),
+    se_methylation = sd(100 * nMethylated / (nMethylated + nUnmethylated), na.rm = TRUE) / sqrt(n())
   ) %>%
   mutate(
-    percent_methylation = 100 * total_methylated / (total_methylated + total_unmethylated),
-    # Make context a factor with CpG first
-    context = factor(context, levels = c("CpG", "CHG", "CHH"))
+    context = factor(context, levels = c("CpG", "CHG", "CHH")),
+    ymin = mean_methylation - se_methylation,
+    ymax = mean_methylation + se_methylation
   )
 
-# Visualise methylation summary
-ggplot(methylation_summary, aes(x = context, y = percent_methylation, fill = context)) +
-  geom_bar(stat = "identity") +
-  ylab("Methylation (%)") +
+# Plot barplot with error bars
+ggplot(df_summary, aes(x = context, y = mean_methylation, fill = context)) +
+  geom_bar(stat = "identity", width = 0.6) +
+  geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2) +
+  ylab("Mean Methylation (%)") +
   xlab("Context") +
-  ggtitle("Methylation ercentage across sequence contexts (Pop Genome Alignment)") +
+  ggtitle("Mean Methylation Percentage with Error Bars") +
   scale_fill_manual(values = c("CpG" = "#1f77b4", "CHG" = "#2ca02c", "CHH" = "#d62728")) +
   theme_minimal()
 ```
@@ -51,24 +52,25 @@ ggplot(methylation_summary, aes(x = context, y = percent_methylation, fill = con
 # Summarizing context-specific methylation from control genome alignments
 
 ```{r methylation_controls_aligned}
-ctrl_methylation_summary <- ctrls %>%
+df_summary <- ctrls %>%
   group_by(context) %>%
   summarise(
-    total_methylated = sum(nMethylated, na.rm = TRUE),
-    total_unmethylated = sum(nUnmethylated, na.rm = TRUE)
+    mean_methylation = mean(100 * nMethylated / (nMethylated + nUnmethylated), na.rm = TRUE),
+    se_methylation = sd(100 * nMethylated / (nMethylated + nUnmethylated), na.rm = TRUE) / sqrt(n())
   ) %>%
   mutate(
-    percent_methylation = 100 * total_methylated / (total_methylated + total_unmethylated),
-    # Make context a factor with CpG first
-    context = factor(context, levels = c("CpG", "CHG", "CHH"))
+    context = factor(context, levels = c("CpG", "CHG", "CHH")),
+    ymin = mean_methylation - se_methylation,
+    ymax = mean_methylation + se_methylation
   )
 
-#Visualise controls methylation summary
-ggplot(ctrl_methylation_summary, aes(x = context, y = percent_methylation, fill = context)) +
-  geom_bar(stat = "identity") +
-  ylab("Methylation (%)") +
+# Plot barplot with error bars
+ggplot(df_summary, aes(x = context, y = mean_methylation, fill = context)) +
+  geom_bar(stat = "identity", width = 0.6) +
+  geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2) +
+  ylab("Mean Methylation (%)") +
   xlab("Context") +
-  ggtitle("Methylation percentage across sequence contexts (Control Genome Alignment)") +
+  ggtitle("Mean Methylation Percentage with Error Bars") +
   scale_fill_manual(values = c("CpG" = "#1f77b4", "CHG" = "#2ca02c", "CHH" = "#d62728")) +
   theme_minimal()
 ```
@@ -76,38 +78,100 @@ ggplot(ctrl_methylation_summary, aes(x = context, y = percent_methylation, fill 
 # Summarizing control-specific methylation from control genome alignments 
 
 ```{r controls_methylation}
-# Summarize methylation by control
+#Calculate % methylation per row
 methylation_by_chr <- ctrls %>%
-  group_by(chr) %>%
+  mutate(percent_methylation = 100 * nMethylated / (nMethylated + nUnmethylated)) %>%
+  filter(!is.na(percent_methylation)) %>%
+  group_by(chr, context) %>%
   summarise(
-    total_methylated = sum(nMethylated, na.rm = TRUE),
-    total_unmethylated = sum(nUnmethylated, na.rm = TRUE)
-  ) %>%
-  mutate(
-    percent_methylation = 100 * total_methylated / (total_methylated + total_unmethylated)
+    mean_methylation = mean(percent_methylation, na.rm = TRUE),
+    se_methylation = sd(percent_methylation, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
   )
 
-# sorting controls
+#Sort chromosomes
 methylation_by_chr <- methylation_by_chr %>%
-  arrange(desc(percent_methylation)) %>%
+  arrange(desc(mean_methylation)) %>%
   mutate(chr = factor(chr, levels = unique(chr)))
 
-# Plot methylation percentage by chr
-ggplot(methylation_by_chr, aes(x = chr, y = percent_methylation, fill = chr)) +
+# Plot barplot
+ggplot(methylation_by_chr, aes(x = chr, y = mean_methylation, fill = chr)) +
   geom_bar(stat = "identity") +
+  #geom_errorbar(aes(ymin = mean_methylation - se_methylation,
+   #                 ymax = mean_methylation + se_methylation),
+    #            width = 0.2) +
   ylab("Methylation (%)") +
   xlab("Control") +
   ggtitle("Methylation percentage across sequence of controls") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  guides(fill = "none")  # Remove legend since chr is already on x-axis
+  guides(fill = "none")
+
 ```
 
 
+# Methylated control
 
+```{r puc19}
+methylated_control <- read.delim("~/pop_methylation/Methyl47625/puc19/ABLG-47625_CpG.bedGraph", header = FALSE, comment.char = "t")
+# names on the bed file 
+#col 1. The chromosome/contig/scaffold name
+#col 2. The start coordinate
+#col 3. The end coordinate
+#col 4. The methylation percentage rounded to an integer
+#col 5. The number of alignments/pairs reporting methylated bases
+#col 6. The number of alignments/pairs reporting unmethylated bases
 
+# Assign column names (based on your earlier description)
 
+colnames(methylated_control) <- c("chrom", "start", "end", "methylation_percentage", "methylated_count", "unmethylated_count")
+# View the first few rows
+head(methylated_control)
 
+# Average methylation
+mean(methylated_control$methylation_percentage, na.rm = TRUE)
+###28.91713
 
+ggplot(methylated_control, aes(x = start, y = methylation_percentage)) +
+    geom_line() +
+    labs(
+      title = paste("Mbias Plot for puc19c (methylated control)"),
+      x = "Read Position",
+      y = "Methylation percentage (%)"
+    ) +
+    theme_minimal()
+
+```
+# Umethylated control
+
+```{r lambda}
+unmethylated_control <- read.delim("~/pop_methylation/Methyl47625/lambda/ABLG-47625_CpG.bedGraph", header = FALSE, comment.char = "t")
+# names on the bed file 
+#col 1. The chromosome/contig/scaffold name
+#col 2. The start coordinate
+#col 3. The end coordinate
+#col 4. The methylation percentage rounded to an integer
+#col 5. The number of alignments/pairs reporting methylated bases
+#col 6. The number of alignments/pairs reporting unmethylated bases
+
+# Assign column names (based on your earlier description)
+colnames(unmethylated_control) <- c("chrom", "start", "end", "methylation_percentage", "methylated_count", "unmethylated_count")
+# View the first few rows
+head(unmethylated_control)
+
+# Average methylation
+mean(unmethylated_control$methylation_percentage, na.rm = TRUE)
+###11.62983
+
+ggplot(unmethylated_control, aes(x = start, y = methylation_percentage)) +
+    geom_line() +
+    labs(
+      title = paste("Mbias Plot for lambda (unmethylated control)"),
+      x = "Read Position",
+      y = "Methylation percentage (%)"
+    ) +
+    theme_minimal()
+
+```
 
 
