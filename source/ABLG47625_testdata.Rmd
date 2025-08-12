@@ -26,6 +26,10 @@ ctrls <- read.delim("~/pop_methylation/Methyl47625/ABLG47625_controls_genome/em-
 # Summarizing context-specific methylation from pop genome alignments
 
 ```{r methylation_pop_aligned}
+### total Number of paired reads 
+##   5,678,940
+### coverage = 1.5X
+
 df_summary <- df %>%
   group_by(context) %>%
   summarise(
@@ -37,11 +41,10 @@ df_summary <- df %>%
     ymin = mean_methylation - se_methylation,
     ymax = mean_methylation + se_methylation
   )
-
 # Plot barplot with error bars
 ggplot(df_summary, aes(x = context, y = mean_methylation, fill = context)) +
   geom_bar(stat = "identity", width = 0.6) +
-  geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2) +
+  #geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2) +
   ylab("Mean Methylation (%)") +
   xlab("Context") +
   ggtitle("Mean Methylation Percentage with Error Bars") +
@@ -67,13 +70,15 @@ df_summary <- ctrls %>%
 # Plot barplot with error bars
 ggplot(df_summary, aes(x = context, y = mean_methylation, fill = context)) +
   geom_bar(stat = "identity", width = 0.6) +
-  geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2) +
+  #geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2) +
   ylab("Mean Methylation (%)") +
   xlab("Context") +
-  ggtitle("Mean Methylation Percentage with Error Bars") +
+  ggtitle("Mean Methylation Percentage") +
   scale_fill_manual(values = c("CpG" = "#1f77b4", "CHG" = "#2ca02c", "CHH" = "#d62728")) +
   theme_minimal()
 ```
+
+
 
 # Summarizing control-specific methylation from control genome alignments 
 
@@ -113,6 +118,14 @@ ggplot(methylation_by_chr, aes(x = chr, y = mean_methylation, fill = chr)) +
 # Methylated control
 
 ```{r puc19}
+## Number of  paired-end reads 
+### 1614 
+
+#Expected reads paired-reads for efficient conversion estimate 
+### 500 paired-end 
+
+### coverage = 30 X 
+
 methylated_control <- read.delim("~/pop_methylation/Methyl47625/puc19/ABLG-47625_CpG.bedGraph", header = FALSE, comment.char = "t")
 # names on the bed file 
 #col 1. The chromosome/contig/scaffold name
@@ -125,12 +138,15 @@ methylated_control <- read.delim("~/pop_methylation/Methyl47625/puc19/ABLG-47625
 # Assign column names (based on your earlier description)
 
 colnames(methylated_control) <- c("chrom", "start", "end", "methylation_percentage", "methylated_count", "unmethylated_count")
+
 # View the first few rows
 head(methylated_control)
 
 # Average methylation
 mean(methylated_control$methylation_percentage, na.rm = TRUE)
-###28.91713
+
+
+###28.91713 %
 
 ggplot(methylated_control, aes(x = start, y = methylation_percentage)) +
     geom_line() +
@@ -145,6 +161,12 @@ ggplot(methylated_control, aes(x = start, y = methylation_percentage)) +
 # Umethylated control
 
 ```{r lambda}
+## Number of  paired-end reads 
+### 15,834  
+
+# Expected reads paired-reads for efficient conversion estimate 
+### 5000 paired-end 
+
 unmethylated_control <- read.delim("~/pop_methylation/Methyl47625/lambda/ABLG-47625_CpG.bedGraph", header = FALSE, comment.char = "t")
 # names on the bed file 
 #col 1. The chromosome/contig/scaffold name
@@ -162,7 +184,7 @@ head(unmethylated_control)
 # Average methylation
 mean(unmethylated_control$methylation_percentage, na.rm = TRUE)
 ###11.62983
-
+library(ggplot2)
 ggplot(unmethylated_control, aes(x = start, y = methylation_percentage)) +
     geom_line() +
     labs(
@@ -171,7 +193,6 @@ ggplot(unmethylated_control, aes(x = start, y = methylation_percentage)) +
       y = "Methylation percentage (%)"
     ) +
     theme_minimal()
-
 ```
 
 

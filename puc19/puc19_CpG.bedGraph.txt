@@ -1,4 +1,4 @@
-track type="bedGraph" description="ABLG-47625 CpG methylation levels"
+track type="bedGraph" description="puc19 CpG methylation levels"
 plasmid_puc19c	107	108	0	0	1
 plasmid_puc19c	109	110	0	0	1
 plasmid_puc19c	115	116	0	0	2
