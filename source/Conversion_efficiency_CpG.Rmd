@@ -31,7 +31,7 @@ NEB tech advice: “It sounds like you’re running with just one genome at a ti
 NEB tech advice: “You can get an estimate of APOBEC activity by looking at chrM, which is unmethylated in eukaryotes I know of. Unfortunately there is not really a built-in TET2+BGT/ methylated control (you can get an approximation if you know of some imprinted region).”
 
 ```{r Loading_data}
-cpg_calls <- read.delim("~/pop_methylation/Methyl47625/data/ABLG-47625_CpG.bedGraph.txt", header = FALSE, comment.char = "t")
+cpg_calls <- read.delim("/home/cgumbi/methylation/refcombined/ABLG-47625_CpG.bedGraph", header = FALSE, comment.char = "t")
 #chg_calls <- read.delim("~/pop_methylation/Methyl47625/data/ABLG-47625_CHG.bedGraph.txt", header = FALSE, comment.char = "t")
 #chh_calls <- read.delim("~/pop_methylation/Methyl47625/data/ABLG-47625_CHH.bedGraph.txt", header = FALSE, comment.char = "t")
 # names on the file 
@@ -46,6 +46,37 @@ colnames(cpg_calls) <- c("chrom", "start", "end", "percent_methylation", "methyl
 #colnames(chg_calls) <- c("chrom", "start", "end", "percent_methylation", "methylated_reads", "unmethylated_reads")
 #colnames(chh_calls) <- c("chrom", "start", "end", "percent_methylation", "methylated_reads", "unmethylated_reads")
 ```
+
+# Editing CpG dataframe
+
+```{r editing_cpg_df}
+#Remove rows with missing values 
+cpg_calls <- na.omit(cpg_calls)
+# Remove "genome_hic_" and "_RagTag" from the 'chrom' column
+cpg_calls$chrom <- gsub("genome_hic_", "", cpg_calls$chrom)
+cpg_calls$chrom <- gsub("_RagTag", "", cpg_calls$chrom)
+```
+
+# Visulize CpG methylation by chromosome
+
+```{r methylation_by_chom}
+cpg_calls <- cpg_calls %>%
+  filter(!is.na(start), !is.na(percent_methylation))
+cpg_meth <- ggplot(cpg_calls, aes(x = start, y = percent_methylation, 
+                                        color = chrom)) + 
+  geom_point(alpha = 0.6, size = 1) +
+  facet_wrap(~ chrom, scales = "free_x") +
+  theme_ipsum() +
+  labs(title = "Scatter plot for CpG methylation by scaffold",
+       x = "Genomic position", y = "Percentage methylation (%)") +
+  theme(legend.position = "none")
+
+# Save CgG plot
+ggsave("~/methylation/Methyl47625/figures/CpG_methylation_plot.png", plot = cpg_plot, width = 10, height = 6, dpi = 300)
+```
+
+
+
 
 # Sub-setting CpG methylation data chromosome
 
