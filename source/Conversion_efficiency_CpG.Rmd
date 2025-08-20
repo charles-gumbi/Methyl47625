@@ -33,8 +33,8 @@ NEB tech advice: “You can get an estimate of APOBEC activity by looking at chr
 
 ```{r Loading_data}
 cpg_calls <- read.delim("/home/cgumbi/methylation/refcombined/ABLG-47625_CpG.bedGraph", header = FALSE, comment.char = "t")
-#chg_calls <- read.delim("~/pop_methylation/Methyl47625/data/ABLG-47625_CHG.bedGraph.txt", header = FALSE, comment.char = "t")
-#chh_calls <- read.delim("~/pop_methylation/Methyl47625/data/ABLG-47625_CHH.bedGraph.txt", header = FALSE, comment.char = "t")
+chg_calls <- read.delim("/home/cgumbi/methylation/refcombined/ABLG-47625_CHG.bedGraph", header = FALSE, comment.char = "t")
+chh_calls <- read.delim("/home/cgumbi/methylation/refcombined/ABLG-47625_CHH.bedGraph", header = FALSE, comment.char = "t")
 # names on the file 
 # col 1. The chromosome/contig/scaffold name
 # col 2. The start coordinate
@@ -44,8 +44,52 @@ cpg_calls <- read.delim("/home/cgumbi/methylation/refcombined/ABLG-47625_CpG.bed
 # col 6. The number of alignments/pairs reporting unmethylated bases
 # Rename the columns
 colnames(cpg_calls) <- c("chrom", "start", "end", "percent_methylation", "methylated_reads", "unmethylated_reads")
-#colnames(chg_calls) <- c("chrom", "start", "end", "percent_methylation", "methylated_reads", "unmethylated_reads")
-#colnames(chh_calls) <- c("chrom", "start", "end", "percent_methylation", "methylated_reads", "unmethylated_reads")
+colnames(chg_calls) <- c("chrom", "start", "end", "percent_methylation", "methylated_reads", "unmethylated_reads")
+colnames(chh_calls) <- c("chrom", "start", "end", "percent_methylation", "methylated_reads", "unmethylated_reads")
+```
+
+# CHH and CHG are also good places to assess APOBEC activity.
+Looking at look at the fraction of observed reads by context (which can be even with low read coverage) and Mbias plots produced by methyldackel are useful for this.
+
+```{r summary_stats_by_context}
+# Adding cytosine context column too each file
+cpg_calls$context <- "CpG"
+chg_calls$context <- "CHG"
+chh_calls$context <- "CHH"
+
+# Combining all cotext into one data frame ---
+meth_all <- bind_rows(cpg_calls, chg_calls, chh_calls)
+write.csv(meth_all,"/home/cgumbi/methylation/refcombined/Methylation_all_context.csv", row.names = F)
+meth_all <- read.csv("/home/cgumbi/methylation/refcombined/Methylation_all_context.csv")
+
+# To free memory 
+rm(chg_calls)
+rm(chh_calls)
+
+# Summary statistics
+summary_stats <- meth_all %>%
+  group_by(context) %>%
+  summarise(
+    mean_meth = mean(percent_methylation, na.rm = TRUE),
+    median_meth = median(percent_methylation, na.rm = TRUE),
+    sd_meth = sd(percent_methylation, na.rm = TRUE),
+    .groups = "drop")
+
+summary_meth_df <- as.data.frame(summary_stats)
+
+
+write.csv(con_eff,"~/methylation/Methyl47625/tables/APOBEC_conversion_efficiency.csv", row.names = F) 
+
+#Boxplot of methylation across contexts
+all_context <- ggplot(meth_all, aes(x = context, y = percent_methylation, fill = context)) +
+  geom_boxplot(outlier.alpha = 0.3, outlier.size = 0.5) +
+  labs(title = "Methylation levels across contexts",
+       x = "Context",
+       y = "Methylation (%)") +
+  theme_ipsum() +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1))
+
 ```
 
 # Editing CpG dataframe
@@ -251,9 +295,6 @@ ggsave("~/methylation/Methyl47625/figures/chrM_mbias_plot.png", plot = chrM_mbia
 ggsave("~/methylation/Methyl47625/figures/lambda_mbias.plot.png", plot = lambda_mbias, width = 10, height = 6, dpi = 300)
 ggsave("~/methylation/Methyl47625/figures/puc19_mbias.plot.png", plot = puc19_mbias, width = 10, height = 6, dpi = 300)
 ```
-
-
-
 
 
 
