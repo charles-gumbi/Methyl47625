@@ -62,9 +62,12 @@ meth_all <- bind_rows(cpg_calls, chg_calls, chh_calls)
 write.csv(meth_all,"/home/cgumbi/methylation/refcombined/Methylation_all_context.csv", row.names = F)
 meth_all <- read.csv("/home/cgumbi/methylation/refcombined/Methylation_all_context.csv")
 
+#Remove rows with missing values 
+meth_all <- na.omit(meth_all)
+
 # To free memory 
-rm(chg_calls)
-rm(chh_calls)
+#rm(chg_calls)
+#rm(chh_calls)
 
 # Summary statistics
 summary_stats <- meth_all %>%
@@ -76,9 +79,7 @@ summary_stats <- meth_all %>%
     .groups = "drop")
 
 summary_meth_df <- as.data.frame(summary_stats)
-
-
-write.csv(con_eff,"~/methylation/Methyl47625/tables/APOBEC_conversion_efficiency.csv", row.names = F) 
+write.csv(summary_meth_df,"~/methylation/Methyl47625/tables/summary_methylation_stats.csv", row.names = F) 
 
 #Boxplot of methylation across contexts
 all_context <- ggplot(meth_all, aes(x = context, y = percent_methylation, fill = context)) +
@@ -90,6 +91,9 @@ all_context <- ggplot(meth_all, aes(x = context, y = percent_methylation, fill =
   theme(legend.position = "none",
         axis.text.x = element_text(angle = 45, hjust = 1))
 
+gg_check(all_context)
+# Save polot with all cytosine context
+ggsave("~/methylation/Methyl47625/figures/all_context_methylation_plot.png", plot = all_context, width = 10, height = 6, dpi = 300)
 ```
 
 # Editing CpG dataframe
