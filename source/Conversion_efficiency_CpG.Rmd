@@ -1,0 +1,182 @@
+---
+title: ABLG methylation analyses using all reference genome comined into one fasta
+  file
+author: "charles-gumbi"
+date: "2025-08-13"
+output:
+  html_document:
+    df_print: paged
+---
+```{r Loading_packages}
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(hrbrthemes)
+library(gcookbook)
+library(extrafont)
+library(tidyverse)
+```
+
+# Modifications from last analyses
+1.Removed T4 and XP-12 phages from the in reference alignment
+
+NEB tech support “We include T4 and XP-12 phages in our control references for hydroxymethylation assessment (a related product). Since you did not spike in T4 or XP-12 to your libraries you can likely ignore any reads that that happen to align to these contigs. If your fin samples do actually contain phages related to XP-12 and T4, you may see more coverage. If you’re interested in the phage genomics too, I suggest that you supplement your genome with a more comprehensive database of phage”contigs” for more interpretable results Since we’re effectively working with only 3 bases in converted libraries, it’s important that the reference sequences represent all the abundant sources of input DNA. If not, you may see anomalous coverage where the aligner mis-places reads derived from other sources on your expected reference. There’s always a risk of this in complex samples… which is why i think it’s good to be suspicious of methylation calls in regions of unusually high coverage”.
+
+2.Reran the pipeline using a combined sequences as reference (pop + pop mitochondrial genome + phage lambda + plasmid puc19c) instead of running pipeline with with sequence as reference sequences.
+
+NEB tech advice: “It sounds like you’re running with just one genome at a time… I don’t recommend that, especially not with converted libraries due to the potential mis-mapping and confused methylation calls. Maybe it’s worth another try with the complete genome including chrM and the control genomes.”
+
+3.Estimated conversion efficiency using chrM and phage lambda which can both be used as negative controls (unmethylated).
+
+NEB tech advice: “You can get an estimate of APOBEC activity by looking at chrM, which is unmethylated in eukaryotes I know of. Unfortunately there is not really a built-in TET2+BGT/ methylated control (you can get an approximation if you know of some imprinted region).”
+
+```{r Loading_data}
+cpg_calls <- read.delim("~/pop_methylation/Methyl47625/data/ABLG-47625_CpG.bedGraph.txt", header = FALSE, comment.char = "t")
+#chg_calls <- read.delim("~/pop_methylation/Methyl47625/data/ABLG-47625_CHG.bedGraph.txt", header = FALSE, comment.char = "t")
+#chh_calls <- read.delim("~/pop_methylation/Methyl47625/data/ABLG-47625_CHH.bedGraph.txt", header = FALSE, comment.char = "t")
+# names on the file 
+# col 1. The chromosome/contig/scaffold name
+# col 2. The start coordinate
+# col 3. The end coordinate
+# col 4. The methylation   percentage rounded to an integer
+# col 5. The number of alignments/pairs reporting methylated bases
+# col 6. The number of alignments/pairs reporting unmethylated bases
+# Rename the columns
+colnames(cpg_calls) <- c("chrom", "start", "end", "percent_methylation", "methylated_reads", "unmethylated_reads")
+#colnames(chg_calls) <- c("chrom", "start", "end", "percent_methylation", "methylated_reads", "unmethylated_reads")
+#colnames(chh_calls) <- c("chrom", "start", "end", "percent_methylation", "methylated_reads", "unmethylated_reads")
+```
+
+# Sub-setting CpG methylation data chromosome
+
+```{r Subset_data_chromosomes}
+chrom_list <- split(cpg_calls, cpg_calls$chrom)
+phage_lambda <- chrom_list[["phage_lambda"]] # unmethylated control
+plasmid_puc19c <- chrom_list[["plasmid_puc19c"]] # methylated control 
+chrM <-chrom_list[["OR482510.1"]] #POP mitochondrial genome
+```
+
+
+# Methylation level on methylated control pUC19
+
+```{r pUC19}
+# average methylation   on pUC19
+puc19_df <- plasmid_puc19c %>%
+   group_by(chrom) %>%
+   summarize(avg_methylation = mean(percent_methylation, na.rm = TRUE),
+     total_methylated_reads = sum(methylated_reads, na.rm = TRUE),
+     total_unmethylated_reads = sum(unmethylated_reads, na.rm = TRUE),
+     .groups = "drop")
+puc19_df
+
+# making a scatter plot
+pUC19_scatter <- ggplot(plasmid_puc19c, aes(x = start, y = percent_methylation)) +
+   geom_point(alpha = 1, size = 2) +
+   labs(title = "Plasmid pUC19",
+         subtitle = "Control DNA CpG methylated pUC19", 
+         x = "Read position", y = "Percentage methylation (%)") +
+    theme_ipsum()
+pUC19_scatter
+gg_check(pUC19_scatter)
+
+# frequency of methylation   percentage on pUC19
+pUC19_hist <- ggplot(plasmid_puc19c, aes(x = percent_methylation)) +
+   geom_histogram(binwidth = 5, fill = "#1f77b4", color = "white") +
+   labs(title = "Methylation frequency of pUC19",
+        subtitle = "Control DNA CpG methylated pUC19",
+        x = "Percentage methylation (%)",y = "Frequency") + 
+   theme_ipsum()
+pUC19_hist
+gg_check(pUC19_hist)
+```
+
+# Methylation on control (phage_lambda)
+
+```{r lambda}
+# average methylation on phage labmda
+lambda_df <- phage_lambda %>%
+   group_by(chrom) %>%
+   summarize(
+     avg_methylation   = mean(percent_methylation  , na.rm = TRUE),
+     total_methylated_reads = sum(methylated_reads, na.rm = TRUE),
+     total_unmethylated_reads = sum(unmethylated_reads, na.rm = TRUE),
+     .groups = "drop")
+ lambda_df
+
+# making a scatter plot
+lambda_scatter <- ggplot(phage_lambda, aes(x = start, y = percent_methylation  )) +
+   geom_point(alpha = 0.6, size = 2) +
+   labs(title = "Lambda",
+        subtitle = "Control DNA unmethylated lambda",
+        x = "Read position",
+        y = "Percentage methylation (%)") +
+   theme_ipsum()
+lambda_scatter
+gg_check(lambda_scatter)
+
+# Histogram of methylation   percentage
+lambda_hist <- ggplot(phage_lambda, aes(x = percent_methylation  )) +
+  geom_histogram(binwidth = 5, fill = "#2ca02c", color = "white") +
+   labs(title = "Methylation frequency lambda",
+        subtitle = "Control DNA unmethylated lambda",
+        x = "Percentage methylation (%)", y = "Frequency") +
+   theme_ipsum()
+lambda_hist
+gg_check(lambda_hist)
+```
+
+# Conversion efficiency
+
+The frequency of CpG methylation in the λ-bacteriophage genome gives an estimate of the conversion efficiency, as the λ-bacteriophage genome is grown in methylase-negative Escherichia coli, which cannot methylate cytosines in CpG context. Thus, for example, if the observed CpG methylation frequency in the λ-bacteriophage is 0.2%, the cytosine-to-thymine conversion in the sample is estimated to be 99.8% efficient (Singer 2019 : Apractical guide to the Measurement and analyses of DNA mmethylation).
+
+```{r Conversion_efficiency_on_labmda}
+# conversion efficiency 
+conv_eff_lambda <- 100 - mean(phage_lambda$percent_methylation  , na.rm = TRUE)
+cat("APOBEC Conversion efficiency from phage Lambda:", round(conv_eff_lambda, 2), "%\n")
+#APOBEC Conversion efficiency from phage Lambda: 96.55 %
+```
+
+# Methylation on the mitochondrail genome (chrM)
+
+```{r chrM}
+#average methylation on chrM
+chrM_df <- chrM %>%
+   group_by(chrom) %>%
+   summarize(
+     avg_methylation = mean(percent_methylation, na.rm = TRUE),
+     total_methylated_reads = sum(methylated_reads, na.rm = TRUE),
+     total_unmethylated_reads = sum(unmethylated_reads, na.rm = TRUE),
+     .groups = "drop")
+chrM_df
+# making a scatter plot
+chrM_scatter <- ggplot(chrM, aes(x = start, y = percent_methylation)) +
+   geom_point(alpha = 0.6, size = 2) +
+   labs(title = "CpG methylation on chrM",
+        x = "Read position",
+        y = "Percentage methylation (%)") +
+   theme_ipsum()
+chrM_scatter
+gg_check(chrM_scatter)
+ 
+# Histogram of methylation   percentage on chrM
+chrM_hist <- ggplot(chrM, aes(x = percent_methylation  )) +
+   geom_histogram(binwidth = 5, fill = "#d62728", color = "white") +
+   labs(title = "Methylation frequency of chrM", 
+        x = "Percentage methylation (%)",y = "Frequency") + 
+   theme_ipsum()
+chrM_hist
+gg_check(chrM_hist)
+```
+
+# Conversion efficiency on chrM
+
+```{r Conversion_efficiency_chrM}
+## conversion efficiency chrM
+conv_eff_chrM <- 100 - mean(chrM$percent_methylation  , na.rm = TRUE)
+cat("APOBEC Conversion efficiency from chrM:", round(conv_eff_chrM, 2), "%\n")
+#APOBEC Conversion efficiency from chrM: 96.91 %
+```
+
+
+
+
