@@ -65,10 +65,6 @@ meth_all <- read.csv("/home/cgumbi/methylation/refcombined/Methylation_all_conte
 #Remove rows with missing values 
 meth_all <- na.omit(meth_all)
 
-# To free memory 
-#rm(chg_calls)
-#rm(chh_calls)
-
 # Summary statistics
 summary_stats <- meth_all %>%
   group_by(context) %>%
@@ -96,6 +92,29 @@ gg_check(all_context)
 ggsave("~/methylation/Methyl47625/figures/all_context_methylation_plot.png", plot = all_context, width = 10, height = 6, dpi = 300)
 ```
 
+# Looking into the context vs chromosome 
+
+```{r context_chrom}
+chrom_context <- meth_all %>%
+  group_by(chrom, context) %>%
+  mutate(total_reads = methylated_reads + unmethylated_reads) %>%
+  filter(total_reads == 2) %>%
+  filter(chrom %in% c("OR482510.1", "plasmid_puc19c", "phage_lambda"))
+
+# Create the barplot
+contextvschrom <- ggplot(chrom_context, aes(x = context, y = percent_methylation, fill = chrom)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Mean Methylation per Context by Chrom",
+       x = "Context",
+       y = "Methylation",
+       fill = "Chrom") +
+  theme_ipsum()
+ggsave("~/methylation/Methyl47625/figures/contextvschrom_plot.png", plot = contextvschrom, width = 10, height = 6, dpi = 300)
+
+```
+
+
+
 # Editing CpG dataframe
 
 ```{r editing_cpg_df}
@@ -106,7 +125,7 @@ cpg_calls$chrom <- gsub("genome_hic_", "", cpg_calls$chrom)
 cpg_calls$chrom <- gsub("_RagTag", "", cpg_calls$chrom)
 ```
 
-# Visulize CpG methylation by chromosome
+# Visualize CpG methylation by chromosome
 
 ```{r methylation_by_chom}
 cpg_calls <- cpg_calls %>%
