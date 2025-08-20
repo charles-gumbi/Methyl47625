@@ -15,6 +15,7 @@ library(hrbrthemes)
 library(gcookbook)
 library(extrafont)
 library(tidyverse)
+library(hunspell)
 ```
 
 # Modifications from last analyses
@@ -61,22 +62,21 @@ cpg_calls$chrom <- gsub("_RagTag", "", cpg_calls$chrom)
 
 ```{r methylation_by_chom}
 cpg_calls <- cpg_calls %>%
-  filter(!is.na(start), !is.na(percent_methylation))
-cpg_meth <- ggplot(cpg_calls, aes(x = start, y = percent_methylation, 
-                                        color = chrom)) + 
-  geom_point(alpha = 0.6, size = 1) +
-  facet_wrap(~ chrom, scales = "free_x") +
+  filter(!is.na(chrom), !is.na(percent_methylation))
+
+cpg_box <- ggplot(cpg_calls, aes(x = chrom, y = percent_methylation, fill = chrom)) +
+  geom_boxplot(outlier.alpha = 0.3, outlier.size = 0.5) +
   theme_ipsum() +
-  labs(title = "Scatter plot for CpG methylation by scaffold",
-       x = "Genomic position", y = "Percentage methylation (%)") +
-  theme(legend.position = "none")
-
+  labs(title = "CpG methylation by scaffold",
+       subtitle = "OR482510.1 = chrM, phage_lambda = unmethylated control, plasmid_puc19c = methylated control",
+       x = "Scaffold", 
+       y = "Percentage methylation (%)") +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1))   # rotate labels
+gg_check(cpg_box)
 # Save CgG plot
-ggsave("~/methylation/Methyl47625/figures/CpG_methylation_plot.png", plot = cpg_plot, width = 10, height = 6, dpi = 300)
+ggsave("~/methylation/Methyl47625/figures/CpG_methylation_plot.png", plot = cpg_box, width = 10, height = 6, dpi = 300)
 ```
-
-
-
 
 # Sub-setting CpG methylation data chromosome
 
@@ -86,7 +86,6 @@ phage_lambda <- chrom_list[["phage_lambda"]] # unmethylated control
 plasmid_puc19c <- chrom_list[["plasmid_puc19c"]] # methylated control 
 chrM <-chrom_list[["OR482510.1"]] #POP mitochondrial genome
 ```
-
 
 # Methylation level on methylated control pUC19
 
@@ -98,7 +97,7 @@ puc19_df <- plasmid_puc19c %>%
      total_methylated_reads = sum(methylated_reads, na.rm = TRUE),
      total_unmethylated_reads = sum(unmethylated_reads, na.rm = TRUE),
      .groups = "drop")
-puc19_df
+write.csv(puc19_df,"~/methylation/Methyl47625/tables/puc19_methylation_summary.csv", row.names = F) 
 
 # making a scatter plot
 pUC19_scatter <- ggplot(plasmid_puc19c, aes(x = start, y = percent_methylation)) +
@@ -107,7 +106,6 @@ pUC19_scatter <- ggplot(plasmid_puc19c, aes(x = start, y = percent_methylation))
          subtitle = "Control DNA CpG methylated pUC19", 
          x = "Read position", y = "Percentage methylation (%)") +
     theme_ipsum()
-pUC19_scatter
 gg_check(pUC19_scatter)
 
 # frequency of methylation   percentage on pUC19
@@ -117,8 +115,10 @@ pUC19_hist <- ggplot(plasmid_puc19c, aes(x = percent_methylation)) +
         subtitle = "Control DNA CpG methylated pUC19",
         x = "Percentage methylation (%)",y = "Frequency") + 
    theme_ipsum()
-pUC19_hist
 gg_check(pUC19_hist)
+
+ggsave("~/methylation/Methyl47625/figures/pUC19_scatter_plot.png", plot = pUC19_scatter, width = 10, height = 6, dpi = 300)
+ggsave("~/methylation/Methyl47625/figures/pUC19_hist_plot.png", plot = pUC19_hist, width = 10, height = 6, dpi = 300)
 ```
 
 # Methylation on control (phage_lambda)
@@ -132,8 +132,8 @@ lambda_df <- phage_lambda %>%
      total_methylated_reads = sum(methylated_reads, na.rm = TRUE),
      total_unmethylated_reads = sum(unmethylated_reads, na.rm = TRUE),
      .groups = "drop")
- lambda_df
-
+write.csv(lambda_df,"~/methylation/Methyl47625/tables/lambda_methylation_summary.csv", row.names = F) 
+ 
 # making a scatter plot
 lambda_scatter <- ggplot(phage_lambda, aes(x = start, y = percent_methylation  )) +
    geom_point(alpha = 0.6, size = 2) +
@@ -142,7 +142,6 @@ lambda_scatter <- ggplot(phage_lambda, aes(x = start, y = percent_methylation  )
         x = "Read position",
         y = "Percentage methylation (%)") +
    theme_ipsum()
-lambda_scatter
 gg_check(lambda_scatter)
 
 # Histogram of methylation   percentage
@@ -152,8 +151,10 @@ lambda_hist <- ggplot(phage_lambda, aes(x = percent_methylation  )) +
         subtitle = "Control DNA unmethylated lambda",
         x = "Percentage methylation (%)", y = "Frequency") +
    theme_ipsum()
-lambda_hist
 gg_check(lambda_hist)
+
+ggsave("~/methylation/Methyl47625/figures/lambda_scatter_plot.png", plot = lambda_scatter, width = 10, height = 6, dpi = 300)
+ggsave("~/methylation/Methyl47625/figures/lambda_hist.plot.png", plot = lambda_hist, width = 10, height = 6, dpi = 300)
 ```
 
 # Conversion efficiency
@@ -178,7 +179,9 @@ chrM_df <- chrM %>%
      total_methylated_reads = sum(methylated_reads, na.rm = TRUE),
      total_unmethylated_reads = sum(unmethylated_reads, na.rm = TRUE),
      .groups = "drop")
-chrM_df
+
+write.csv(chrM_df,"~/methylation/Methyl47625/tables/chrM_methylation_summary.csv", row.names = F) 
+
 # making a scatter plot
 chrM_scatter <- ggplot(chrM, aes(x = start, y = percent_methylation)) +
    geom_point(alpha = 0.6, size = 2) +
@@ -186,7 +189,6 @@ chrM_scatter <- ggplot(chrM, aes(x = start, y = percent_methylation)) +
         x = "Read position",
         y = "Percentage methylation (%)") +
    theme_ipsum()
-chrM_scatter
 gg_check(chrM_scatter)
  
 # Histogram of methylation   percentage on chrM
@@ -195,8 +197,11 @@ chrM_hist <- ggplot(chrM, aes(x = percent_methylation  )) +
    labs(title = "Methylation frequency of chrM", 
         x = "Percentage methylation (%)",y = "Frequency") + 
    theme_ipsum()
-chrM_hist
 gg_check(chrM_hist)
+
+ggsave("~/methylation/Methyl47625/figures/chrM_scatter_plot.png", plot = chrM_scatter, width = 10, height = 6, dpi = 300)
+ggsave("~/methylation/Methyl47625/figures/chrM_hist.plot.png", plot = chrM_hist, width = 10, height = 6, dpi = 300)
+
 ```
 
 # Conversion efficiency on chrM
@@ -206,7 +211,60 @@ gg_check(chrM_hist)
 conv_eff_chrM <- 100 - mean(chrM$percent_methylation  , na.rm = TRUE)
 cat("APOBEC Conversion efficiency from chrM:", round(conv_eff_chrM, 2), "%\n")
 #APOBEC Conversion efficiency from chrM: 96.91 %
+
+con_eff <- data.frame(chrom = c("chrM","lambda"), conversion_efficiency = c(96.91, 96.55))
+write.csv(con_eff,"~/methylation/Methyl47625/tables/APOBEC_conversion_efficiency.csv", row.names = F) 
 ```
+
+
+# Methylation bias plots with ggplot
+
+```{r mbias_plots}
+puc19_mbias <- ggplot(plasmid_puc19c, aes(x = start, y = percent_methylation)) +
+  geom_line() +
+  labs(title = "Methylation bias plot for pUC19",
+        subtitle = "Control DNA CpG methylated pUC19",
+      x = "Read Position",
+      y = "Percentage methylation (%)") +
+    theme_ipsum()
+gg_check(puc19_mbias)
+
+lambda_mbias <- ggplot(phage_lambda, aes(x = start, y = percent_methylation)) +
+  geom_line() +
+  labs(title = "Methylation bias plot for Lambda",
+        subtitle = "Control DNA unmethylated Lambda",
+      x = "Read Position",
+      y = "Percentage methylation (%)") +
+    theme_ipsum()
+gg_check(lambda_mbias)
+
+chrM_mbias <- ggplot(chrM, aes(x = start, y = percent_methylation)) +
+  geom_line() +
+  labs(title = "Methylation bias plot for chrM",
+        subtitle = "Control DNA mitochondrial genome",
+      x = "Read Position",
+      y = "Percentage methylation (%)") +
+    theme_ipsum()
+gg_check(chrM_mbias)
+
+ggsave("~/methylation/Methyl47625/figures/chrM_mbias_plot.png", plot = chrM_mbias, width = 10, height = 6, dpi = 300)
+ggsave("~/methylation/Methyl47625/figures/lambda_mbias.plot.png", plot = lambda_mbias, width = 10, height = 6, dpi = 300)
+ggsave("~/methylation/Methyl47625/figures/puc19_mbias.plot.png", plot = puc19_mbias, width = 10, height = 6, dpi = 300)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
