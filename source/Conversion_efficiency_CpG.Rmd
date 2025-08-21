@@ -360,10 +360,9 @@ conv_eff_chh <- 100 - mean(chh_calls$percent_methylation  , na.rm = TRUE)
 cat("APOBEC Conversion efficiency from chrM:", round(conv_eff_chh, 2), "%\n")
 ```
 
-
-
 # Table summary for conversion efficiency 
-```{r}
+
+```{r sum_con_eff}
 con_eff <- data.frame(approach = c("chrM","Lambda", "CHG methylation", "CHH methylation"),
                       conversion_efficiency = c(96.91, 96.55, 96.25,96.37 ))
 
