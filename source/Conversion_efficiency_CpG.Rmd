@@ -228,7 +228,7 @@ ggsave("~/methylation/Methyl47625/figures/lambda_hist.plot.png", plot = lambda_h
 
 The frequency of CpG methylation in the λ-bacteriophage genome gives an estimate of the conversion efficiency, as the λ-bacteriophage genome is grown in methylase-negative Escherichia coli, which cannot methylate cytosines in CpG context. Thus, for example, if the observed CpG methylation frequency in the λ-bacteriophage is 0.2%, the cytosine-to-thymine conversion in the sample is estimated to be 99.8% efficient (Singer 2019 : Apractical guide to the Measurement and analyses of DNA mmethylation).
 
-```{r Conversion_efficiency_on_labmda}
+```{r con_eff_on_labmda}
 # conversion efficiency 
 conv_eff_lambda <- 100 - mean(phage_lambda$percent_methylation  , na.rm = TRUE)
 cat("APOBEC Conversion efficiency from phage Lambda:", round(conv_eff_lambda, 2), "%\n")
@@ -273,14 +273,11 @@ ggsave("~/methylation/Methyl47625/figures/chrM_hist.plot.png", plot = chrM_hist,
 
 # Conversion efficiency on chrM
 
-```{r Conversion_efficiency_chrM}
+```{r con_eff_on_chrM}
 ## conversion efficiency chrM
 conv_eff_chrM <- 100 - mean(chrM$percent_methylation  , na.rm = TRUE)
 cat("APOBEC Conversion efficiency from chrM:", round(conv_eff_chrM, 2), "%\n")
 #APOBEC Conversion efficiency from chrM: 96.91 %
-
-con_eff <- data.frame(chrom = c("chrM","lambda"), conversion_efficiency = c(96.91, 96.55))
-write.csv(con_eff,"~/methylation/Methyl47625/tables/APOBEC_conversion_efficiency.csv", row.names = F) 
 ```
 
 
@@ -320,8 +317,71 @@ ggsave("~/methylation/Methyl47625/figures/puc19_mbias.plot.png", plot = puc19_mb
 ```
 
 
+# Looking at conversion efficiency on chg methylation 
+NEB Tech advice on using CHH and CHG methylation to suplement controls amd chrM in tetcing for conversion effciency " If I wanted to judge the conversion efficiency I would simply look at the lowest methylation you see anywhere. Often it is enough to just look at the methylation levels in non-CG context (in mammalian systems), else some people look at reads from the MT, or withing CpG islands. If you see a general methylation of 0.3% in non-CG context, then your conversion efficiency must have been at least 99.7%"
+
+```{r con_eff_on_chg }
+#Remove rows with missing values 
+chg_calls <- na.omit(chg_calls)
+# methylation level summary 
+chg_df <- chg_calls %>%
+   group_by(chrom) %>%
+   summarize(
+     avg_methylation   = mean(percent_methylation  , na.rm = TRUE),
+     total_methylated_reads = sum(methylated_reads, na.rm = TRUE),
+     total_unmethylated_reads = sum(unmethylated_reads, na.rm = TRUE),
+     .groups = "drop")
+
+write.csv(chg_df,"~/methylation/Methyl47625/tables/chg_methylation_summary.csv", row.names = F) 
+
+conv_eff_chg <- 100 - mean(chg_calls$percent_methylation  , na.rm = TRUE)
+cat("APOBEC Conversion efficiency from chrM:", round(conv_eff_chg, 2), "%\n")
+
+```
+
+# Conversion efficiency with chh methylation 
+Here I will apply similar logic as in the chg case above.  
+
+```{r con_eff_on_chh}
+#Remove rows with missing values 
+chh_calls <- na.omit(chh_calls)
+# methylation level summary
+chh_df <- chh_calls %>%
+   group_by(chrom) %>%
+   summarize(
+     avg_methylation   = mean(percent_methylation  , na.rm = TRUE),
+     total_methylated_reads = sum(methylated_reads, na.rm = TRUE),
+     total_unmethylated_reads = sum(unmethylated_reads, na.rm = TRUE),
+     .groups = "drop")
+
+write.csv(chh_df,"~/methylation/Methyl47625/tables/chh_methylation_summary.csv", row.names = F) 
+
+conv_eff_chh <- 100 - mean(chh_calls$percent_methylation  , na.rm = TRUE)
+cat("APOBEC Conversion efficiency from chrM:", round(conv_eff_chh, 2), "%\n")
+```
 
 
+
+# Table summary for conversion efficiency 
+```{r}
+con_eff <- data.frame(approach = c("chrM","Lambda", "CHG methylation", "CHH methylation"),
+                      conversion_efficiency = c(96.91, 96.55, 96.25,96.37 ))
+
+
+con_eff_plot <- ggplot(con_eff, aes(x = approach, y = conversion_efficiency, fill = approach)) +
+  geom_bar(stat = "identity", position = "dodge", width = 0.6) +  # Adjust bar width here
+  labs(title = "APOBEC Conversion efficiency",
+       subtitle = "CHG = 96.25%, CHH = 96.37%, chrM = 96.91%, Lambda = 96.55%", 
+       x = "Approach",
+       y = "Conversion efficiency (%)") +
+  theme_ipsum() + 
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1))  # rotate labels
+gg_check(con_eff_plot)
+
+ggsave("~/methylation/Methyl47625/figures/APOBEC_conversion_efficency_plot.png", plot = con_eff_plot, width = 10, height = 6, dpi = 300)
+write.csv(con_eff,"~/methylation/Methyl47625/tables/APOBEC_conversion_efficiency.csv", row.names = F) 
+```
 
 
 
