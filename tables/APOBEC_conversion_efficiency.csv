@@ -1,3 +1,5 @@
-"chrom","conversion_efficiency"
+"approach","conversion_efficiency"
 "chrM",96.91
-"lambda",96.55
+"Lambda",96.55
+"CHG methylation",96.25
+"CHH methylation",96.37
