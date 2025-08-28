@@ -1,6 +1,6 @@
 ---
-title: ABLG methylation analyses using all reference genome comined into one fasta
-  file
+title: "ABLG methylation analyses using all reference genome comined into one fasta
+  file"
 author: "charles-gumbi"
 date: "2025-08-13"
 output:
@@ -16,6 +16,7 @@ library(gcookbook)
 library(extrafont)
 library(tidyverse)
 library(hunspell)
+library(data.table)
 ```
 
 # Modifications from last analyses
@@ -32,9 +33,9 @@ NEB tech advice: “It sounds like you’re running with just one genome at a ti
 NEB tech advice: “You can get an estimate of APOBEC activity by looking at chrM, which is unmethylated in eukaryotes I know of. Unfortunately there is not really a built-in TET2+BGT/ methylated control (you can get an approximation if you know of some imprinted region).”
 
 ```{r Loading_data}
-cpg_calls <- read.delim("/home/cgumbi/methylation/refcombined/ABLG-47625_CpG.bedGraph", header = FALSE, comment.char = "t")
-chg_calls <- read.delim("/home/cgumbi/methylation/refcombined/ABLG-47625_CHG.bedGraph", header = FALSE, comment.char = "t")
-chh_calls <- read.delim("/home/cgumbi/methylation/refcombined/ABLG-47625_CHH.bedGraph", header = FALSE, comment.char = "t")
+cpg_calls <- fread("/home/cgumbi/methylation/refcombined/ABLG-47625_CpG.bedGraph", header = FALSE)
+chg_calls <- fread("/home/cgumbi/methylation/refcombined/ABLG-47625_CHG.bedGraph", header = FALSE)
+chh_calls <- fread("/home/cgumbi/methylation/refcombined/ABLG-47625_CHH.bedGraph", header = FALSE)
 # names on the file 
 # col 1. The chromosome/contig/scaffold name
 # col 2. The start coordinate
@@ -59,23 +60,32 @@ chh_calls$context <- "CHH"
 
 # Combining all cotext into one data frame ---
 meth_all <- bind_rows(cpg_calls, chg_calls, chh_calls)
-write.csv(meth_all,"/home/cgumbi/methylation/refcombined/Methylation_all_context.csv", row.names = F)
-meth_all <- read.csv("/home/cgumbi/methylation/refcombined/Methylation_all_context.csv")
-
 #Remove rows with missing values 
 meth_all <- na.omit(meth_all)
+#write combined files
+write.csv(meth_all,"/home/cgumbi/methylation/refcombined/Methylation_all_context.csv", row.names = F)
+meth_all <- fread("/home/cgumbi/methylation/refcombined/Methylation_all_context.csv")
 
 # Summary statistics
 summary_stats <- meth_all %>%
-  group_by(context) %>%
+  group_by(chrom,context) %>%
   summarise(
+    tota_reads = sum(total_reads = methylated_reads + unmethylated_reads),
     mean_meth = mean(percent_methylation, na.rm = TRUE),
     median_meth = median(percent_methylation, na.rm = TRUE),
     sd_meth = sd(percent_methylation, na.rm = TRUE),
     .groups = "drop")
-
+# summery of read counts 
+counts <- summary_stats %>%
+  group_by(chrom,context) %>%
+  summarise( 
+    reads = sum(tota_reads),
+    av_meth =mean(mean_meth))
+   
 summary_meth_df <- as.data.frame(summary_stats)
-write.csv(summary_meth_df,"~/methylation/Methyl47625/tables/summary_methylation_stats.csv", row.names = F) 
+write.csv(summary_meth_df,"~/methylation/Methyl47625/tables/summary_methylation_stats.csv", row.names = F)
+summary_reads_count_df <- as.data.frame(counts)
+write.csv(summary_reads_count_df,"~/methylation/Methyl47625/tables/summary_methylation_read_count.csv", row.names = F)
 
 #Boxplot of methylation across contexts
 all_context <- ggplot(meth_all, aes(x = context, y = percent_methylation, fill = context)) +
@@ -98,7 +108,6 @@ ggsave("~/methylation/Methyl47625/figures/all_context_methylation_plot.png", plo
 chrom_context <- meth_all %>%
   group_by(chrom, context) %>%
   mutate(total_reads = methylated_reads + unmethylated_reads) %>%
-  filter(total_reads == 2) %>%
   filter(chrom %in% c("OR482510.1", "plasmid_puc19c", "phage_lambda"))
 
 # Create the barplot
@@ -365,7 +374,6 @@ cat("APOBEC Conversion efficiency from chrM:", round(conv_eff_chh, 2), "%\n")
 ```{r sum_con_eff}
 con_eff <- data.frame(approach = c("chrM","Lambda", "CHG methylation", "CHH methylation"),
                       conversion_efficiency = c(96.91, 96.55, 96.25,96.37 ))
-
 
 con_eff_plot <- ggplot(con_eff, aes(x = approach, y = conversion_efficiency, fill = approach)) +
   geom_bar(stat = "identity", position = "dodge", width = 0.6) +  # Adjust bar width here
