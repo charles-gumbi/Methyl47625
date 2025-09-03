@@ -1,6 +1,5 @@
 ---
-title: "ABLG methylation analyses using all reference genome comined into one fasta
-  file"
+title: "ABLG47625 methylation analyses using all reference genome comined into one fasta file"
 author: "charles-gumbi"
 date: "2025-08-13"
 output:
@@ -119,11 +118,7 @@ contextvschrom <- ggplot(chrom_context, aes(x = context, y = percent_methylation
        fill = "Chrom") +
   theme_ipsum()
 ggsave("~/methylation/Methyl47625/figures/contextvschrom_plot.png", plot = contextvschrom, width = 10, height = 6, dpi = 300)
-
 ```
-
-
-
 # Editing CpG dataframe
 
 ```{r editing_cpg_df}
