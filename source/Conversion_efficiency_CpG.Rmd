@@ -6,392 +6,268 @@ output:
   html_document:
     df_print: paged
 ---
+
 ```{r Loading_packages}
+# Load necessary R packages for data manipulation and visualization
 library(dplyr)
 library(ggplot2)
 library(readr)
 library(hrbrthemes)
+library(data.table)
+library(tidyverse)
 library(gcookbook)
 library(extrafont)
-library(tidyverse)
 library(hunspell)
-library(data.table)
 ```
 
 # Modifications from last analyses
-1.Removed T4 and XP-12 phages from the in reference alignment
 
-NEB tech support “We include T4 and XP-12 phages in our control references for hydroxymethylation assessment (a related product). Since you did not spike in T4 or XP-12 to your libraries you can likely ignore any reads that that happen to align to these contigs. If your fin samples do actually contain phages related to XP-12 and T4, you may see more coverage. If you’re interested in the phage genomics too, I suggest that you supplement your genome with a more comprehensive database of phage”contigs” for more interpretable results Since we’re effectively working with only 3 bases in converted libraries, it’s important that the reference sequences represent all the abundant sources of input DNA. If not, you may see anomalous coverage where the aligner mis-places reads derived from other sources on your expected reference. There’s always a risk of this in complex samples… which is why i think it’s good to be suspicious of methylation calls in regions of unusually high coverage”.
+1.  **Removed T4 and XP-12 phages from the reference alignment.** *NEB tech support advice:* "We include T4 and XP-12 phages in our control references for hydroxymethylation assessment (a related product). Since you did not spike T4 or XP-12 into your libraries, you can likely ignore any reads that happen to align to these contigs. If your fin samples do actually contain phages related to XP-12 and T4, you may see more coverage. If you're interested in the phage genomics, I suggest that you supplement your genome with a more comprehensive database of phage contigs for more interpretable results. Since we're effectively working with only three bases in converted libraries, it's important that the reference sequences represent all the abundant sources of input DNA. If not, you may see anomalous coverage where the aligner misplaces reads derived from other sources on your expected reference. There's always a risk of this in complex samples, which is why I think it's good to be suspicious of methylation calls in regions of unusually high coverage."
 
-2.Reran the pipeline using a combined sequences as reference (pop + pop mitochondrial genome + phage lambda + plasmid puc19c) instead of running pipeline with with sequence as reference sequences.
+2.  **Reran the pipeline using a combined reference sequence (pop + pop mitochondrial genome + phage lambda + plasmid puc19c) instead of running the pipeline with each sequence as a separate reference.** *NEB tech advice:* "It sounds like you're running with just one genome at a time. I don't recommend that, especially not with converted libraries, due to the potential for mis-mapping and confused methylation calls. Maybe it's worth another try with the complete genome, including chrM and the control genomes."
 
-NEB tech advice: “It sounds like you’re running with just one genome at a time… I don’t recommend that, especially not with converted libraries due to the potential mis-mapping and confused methylation calls. Maybe it’s worth another try with the complete genome including chrM and the control genomes.”
+3.  **Estimated conversion efficiency using chrM and phage lambda, both of which can be used as negative controls (unmethylated).** *NEB tech advice:* "You can get an estimate of APOBEC activity by looking at chrM, which is unmethylated in eukaryotes I know of. Unfortunately, there is not really a built-in TET2+BGT/methylated control (you can get an approximation if you know of some imprinted region)."
 
-3.Estimated conversion efficiency using chrM and phage lambda which can both be used as negative controls (unmethylated).
-
-NEB tech advice: “You can get an estimate of APOBEC activity by looking at chrM, which is unmethylated in eukaryotes I know of. Unfortunately there is not really a built-in TET2+BGT/ methylated control (you can get an approximation if you know of some imprinted region).”
+### **Data Loading and Preparation**
 
 ```{r Loading_data}
-cpg_calls <- fread("/home/cgumbi/methylation/refcombined/ABLG-47625_CpG.bedGraph", header = FALSE)
-chg_calls <- fread("/home/cgumbi/methylation/refcombined/ABLG-47625_CHG.bedGraph", header = FALSE)
-chh_calls <- fread("/home/cgumbi/methylation/refcombined/ABLG-47625_CHH.bedGraph", header = FALSE)
-# names on the file 
-# col 1. The chromosome/contig/scaffold name
-# col 2. The start coordinate
-# col 3. The end coordinate
-# col 4. The methylation   percentage rounded to an integer
-# col 5. The number of alignments/pairs reporting methylated bases
-# col 6. The number of alignments/pairs reporting unmethylated bases
-# Rename the columns
-colnames(cpg_calls) <- c("chrom", "start", "end", "percent_methylation", "methylated_reads", "unmethylated_reads")
-colnames(chg_calls) <- c("chrom", "start", "end", "percent_methylation", "methylated_reads", "unmethylated_reads")
-colnames(chh_calls) <- c("chrom", "start", "end", "percent_methylation", "methylated_reads", "unmethylated_reads")
+# A function to read a single large file, calculate summaries, and free up memory.
+process_methylation_file <- function(file_path, context_name) {
+  # Read the bedGraph file using fread, which is very efficient for large files
+  data <- fread(file_path, header = FALSE, col.names = c("chrom", "start", "end", "percent_methylation", "methylated_reads", "unmethylated_reads"))
+  
+  # Add the context column and remove missing values
+  data$context <- context_name
+  data <- na.omit(data)
+  
+  # Group by chromosome and context to calculate summary statistics
+  summary_stats <- data %>%
+    group_by(chrom, context) %>%
+    summarise(
+      total_reads = sum(methylated_reads + unmethylated_reads),
+      mean_meth = mean(percent_methylation, na.rm = TRUE),
+      median_meth = median(percent_methylation, na.rm = TRUE),
+      sd_meth = sd(percent_methylation, na.rm = TRUE),
+      .groups = "drop"
+    )
+  
+  # Explicitly remove the large raw data from memory and run garbage collection
+  rm(data)
+  gc()
+  
+  return(summary_stats)
+}
+
+# Process each file sequentially
+cpg_summary <- process_methylation_file("/home/cgumbi/methylation/refcombined/ABLG-47625_CpG.bedGraph", "CpG")
+chg_summary <- process_methylation_file("/home/cgumbi/methylation/refcombined/ABLG-47625_CHG.bedGraph", "CHG")
+chh_summary <- process_methylation_file("/home/cgumbi/methylation/refcombined/ABLG-47625_CHH.bedGraph", "CHH")
+
+# Combine the much smaller summary data frames
+all_summary <- bind_rows(cpg_summary, chg_summary, chh_summary)
+
+# Write the combined summary data to a CSV file
+write.csv(all_summary, "~/methylation/Methyl47625/tables/summary_all_contexts.csv", row.names = FALSE)
 ```
 
-# CHH and CHG are also good places to assess APOBEC activity.
-Looking at look at the fraction of observed reads by context (which can be even with low read coverage) and Mbias plots produced by methyldackel are useful for this.
+#### **Plotting and Analysis on Summarized Data**
 
-```{r summary_stats_by_context}
-# Adding cytosine context column too each file
-cpg_calls$context <- "CpG"
-chg_calls$context <- "CHG"
-chh_calls$context <- "CHH"
+Now, you can use the much smaller `all_summary` data frame for your plots and analysis. This avoids the memory spike that occurred with `meth_all`.
 
-# Combining all cotext into one data frame ---
-meth_all <- bind_rows(cpg_calls, chg_calls, chh_calls)
-#Remove rows with missing values 
-meth_all <- na.omit(meth_all)
-#write combined files
-write.csv(meth_all,"/home/cgumbi/methylation/refcombined/Methylation_all_context.csv", row.names = F)
-meth_all <- fread("/home/cgumbi/methylation/refcombined/Methylation_all_context.csv")
-
-# Summary statistics
-summary_stats <- meth_all %>%
-  group_by(chrom,context) %>%
-  summarise(
-    tota_reads = sum(total_reads = methylated_reads + unmethylated_reads),
-    mean_meth = mean(percent_methylation, na.rm = TRUE),
-    median_meth = median(percent_methylation, na.rm = TRUE),
-    sd_meth = sd(percent_methylation, na.rm = TRUE),
-    .groups = "drop")
-# summery of read counts 
-counts <- summary_stats %>%
-  group_by(chrom,context) %>%
-  summarise( 
-    reads = sum(tota_reads),
-    av_meth =mean(mean_meth))
-   
-summary_meth_df <- as.data.frame(summary_stats)
-write.csv(summary_meth_df,"~/methylation/Methyl47625/tables/summary_methylation_stats.csv", row.names = F)
-summary_reads_count_df <- as.data.frame(counts)
-write.csv(summary_reads_count_df,"~/methylation/Methyl47625/tables/summary_methylation_read_count.csv", row.names = F)
-
-#Boxplot of methylation across contexts
-all_context <- ggplot(meth_all, aes(x = context, y = percent_methylation, fill = context)) +
+```{r Ploting_methylation_summary calls}
+# Plot the methylation levels across contexts using the summary data
+all_context_plot <- ggplot(all_summary, aes(x = context, y = mean_meth, fill = context)) +
   geom_boxplot(outlier.alpha = 0.3, outlier.size = 0.5) +
-  labs(title = "Methylation levels across contexts",
-       x = "Context",
-       y = "Methylation (%)") +
+  labs(title = "Mean Methylation Across Contexts", x = "Context", y = "Mean Methylation (%)") +
   theme_ipsum() +
-  theme(legend.position = "none",
-        axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
 
-gg_check(all_context)
-# Save polot with all cytosine context
-ggsave("~/methylation/Methyl47625/figures/all_context_methylation_plot.png", plot = all_context, width = 10, height = 6, dpi = 300)
-```
+# Save the plot
+ggsave("~/methylation/Methyl47625/figures/all_context_methylation_plot.png", plot = all_context_plot, width = 10, height = 6, dpi = 300)
 
-# Looking into the context vs chromosome 
-
-```{r context_chrom}
-chrom_context <- meth_all %>%
-  group_by(chrom, context) %>%
-  mutate(total_reads = methylated_reads + unmethylated_reads) %>%
-  filter(chrom %in% c("OR482510.1", "plasmid_puc19c", "phage_lambda"))
-
-# Create the barplot
-contextvschrom <- ggplot(chrom_context, aes(x = context, y = percent_methylation, fill = chrom)) +
+# Note: The original `contextvschrom` plot relied on raw data. You can recreate a similar
+# bar plot using the summarized data if that's sufficient.
+contextvschrom <- all_summary %>%
+  filter(chrom %in% c("OR482510.1", "plasmid_puc19c", "phage_lambda")) %>%
+  ggplot(aes(x = context, y = mean_meth, fill = chrom)) +
   geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Mean Methylation per Context by Chrom",
-       x = "Context",
-       y = "Methylation",
-       fill = "Chrom") +
+  labs(title = "Mean methylation per context by chromosome", x = "Context", y = "Methylation", fill = "Chrom") +
   theme_ipsum()
 ggsave("~/methylation/Methyl47625/figures/contextvschrom_plot.png", plot = contextvschrom, width = 10, height = 6, dpi = 300)
-```
-# Editing CpG dataframe
 
-```{r editing_cpg_df}
-#Remove rows with missing values 
-cpg_calls <- na.omit(cpg_calls)
-# Remove "genome_hic_" and "_RagTag" from the 'chrom' column
-cpg_calls$chrom <- gsub("genome_hic_", "", cpg_calls$chrom)
-cpg_calls$chrom <- gsub("_RagTag", "", cpg_calls$chrom)
 ```
 
-# Visualize CpG methylation by chromosome
+#### **Making scatter and Methylation Bias Plots**
 
-```{r methylation_by_chom}
-cpg_calls <- cpg_calls %>%
-  filter(!is.na(chrom), !is.na(percent_methylation))
+Plots that require plotting every single read, such as the scatter plots and methylation bias plots (`pUC19_scatter`, `lambda_scatter`, `chrM_scatter`, etc.), are still memory-intensive. For these, the best practice is to load *one file at a time*, generate the plot, save it, and then clear the data from memory immediately. This ensures that you never have multiple large datasets in memory at once.
 
-cpg_box <- ggplot(cpg_calls, aes(x = chrom, y = percent_methylation, fill = chrom)) +
-  geom_boxplot(outlier.alpha = 0.3, outlier.size = 0.5) +
-  theme_ipsum() +
-  labs(title = "CpG methylation by scaffold",
-       subtitle = "OR482510.1 = chrM, phage_lambda = unmethylated control, plasmid_puc19c = methylated control",
-       x = "Scaffold", 
-       y = "Percentage methylation (%)") +
-  theme(legend.position = "none",
-        axis.text.x = element_text(angle = 45, hjust = 1))   # rotate labels
-gg_check(cpg_box)
-# Save CgG plot
-ggsave("~/methylation/Methyl47625/figures/CpG_methylation_plot.png", plot = cpg_box, width = 10, height = 6, dpi = 300)
-```
-
-# Sub-setting CpG methylation data chromosome
-
-```{r Subset_data_chromosomes}
-chrom_list <- split(cpg_calls, cpg_calls$chrom)
-phage_lambda <- chrom_list[["phage_lambda"]] # unmethylated control
-plasmid_puc19c <- chrom_list[["plasmid_puc19c"]] # methylated control 
-chrM <-chrom_list[["OR482510.1"]] #POP mitochondrial genome
-```
-
-# Methylation level on methylated control pUC19
-
-```{r pUC19}
-# average methylation   on pUC19
-puc19_df <- plasmid_puc19c %>%
-   group_by(chrom) %>%
-   summarize(avg_methylation = mean(percent_methylation, na.rm = TRUE),
-     total_methylated_reads = sum(methylated_reads, na.rm = TRUE),
-     total_unmethylated_reads = sum(unmethylated_reads, na.rm = TRUE),
-     .groups = "drop")
-write.csv(puc19_df,"~/methylation/Methyl47625/tables/puc19_methylation_summary.csv", row.names = F) 
-
-# making a scatter plot
-pUC19_scatter <- ggplot(plasmid_puc19c, aes(x = start, y = percent_methylation)) +
-   geom_point(alpha = 1, size = 2) +
-   labs(title = "Plasmid pUC19",
-         subtitle = "Control DNA CpG methylated pUC19", 
-         x = "Read position", y = "Percentage methylation (%)") +
+```{r Scatter_and_mbias_plots}
+# Function to read, plot, and clean up for a single chromosome
+plot_single_chromosome <- function(file_path, chrom_name, title, subtitle, x_label, y_label) {
+  # Read the specific chromosome data from the large file
+  data <- fread(file_path, header = FALSE, col.names = c("chrom", "start", "end", "percent_methylation", "methylated_reads", "unmethylated_reads"))
+  
+  # Clean up and filter the data for the target chromosome
+  data <- na.omit(data)
+  data$chrom <- gsub("genome_hic_", "", data$chrom)
+  data$chrom <- gsub("_RagTag", "", data$chrom)
+  data_subset <- data %>% filter(chrom == chrom_name)
+  
+  # Create the plot
+  plot <- ggplot(data_subset, aes(x = start, y = percent_methylation)) +
+    geom_point(alpha = 0.6, size = 2) +
+    labs(title = title, subtitle = subtitle, x = x_label, y = y_label) +
     theme_ipsum()
-gg_check(pUC19_scatter)
-
-# frequency of methylation   percentage on pUC19
-pUC19_hist <- ggplot(plasmid_puc19c, aes(x = percent_methylation)) +
-   geom_histogram(binwidth = 5, fill = "#1f77b4", color = "white") +
-   labs(title = "Methylation frequency of pUC19",
-        subtitle = "Control DNA CpG methylated pUC19",
-        x = "Percentage methylation (%)",y = "Frequency") + 
-   theme_ipsum()
-gg_check(pUC19_hist)
-
-ggsave("~/methylation/Methyl47625/figures/pUC19_scatter_plot.png", plot = pUC19_scatter, width = 10, height = 6, dpi = 300)
-ggsave("~/methylation/Methyl47625/figures/pUC19_hist_plot.png", plot = pUC19_hist, width = 10, height = 6, dpi = 300)
+  
+  # Save the plot
+  ggsave(paste0("~/methylation/Methyl47625/figures/", gsub(" ", "_", title), ".png"), plot = plot, width = 10, height = 6, dpi = 300)
+  
+  # Clean up and free memory
+  rm(data, data_subset)
+  gc()
+}
+# Example usage for the scatter plots
+plot_single_chromosome("/home/cgumbi/methylation/refcombined/ABLG-47625_CpG.bedGraph", "plasmid_puc19c", "Plasmid pUC19 Scatter", "Control DNA CpG methylated pUC19", "Read position", "Percentage methylation (%)")
+plot_single_chromosome("/home/cgumbi/methylation/refcombined/ABLG-47625_CpG.bedGraph", "phage_lambda", "Lambda Scatter", "Control DNA unmethylated lambda", "Read position", "Percentage methylation (%)")
+plot_single_chromosome("/home/cgumbi/methylation/refcombined/ABLG-47625_CpG.bedGraph", "OR482510.1", "CpG methylation on chrM", NULL, "Read position", "Percentage methylation (%)")
 ```
 
-# Methylation on control (phage_lambda)
+### Conversion Efficiency Calculation
 
-```{r lambda}
-# average methylation on phage labmda
-lambda_df <- phage_lambda %>%
-   group_by(chrom) %>%
-   summarize(
-     avg_methylation   = mean(percent_methylation  , na.rm = TRUE),
-     total_methylated_reads = sum(methylated_reads, na.rm = TRUE),
-     total_unmethylated_reads = sum(unmethylated_reads, na.rm = TRUE),
-     .groups = "drop")
-write.csv(lambda_df,"~/methylation/Methyl47625/tables/lambda_methylation_summary.csv", row.names = F) 
- 
-# making a scatter plot
-lambda_scatter <- ggplot(phage_lambda, aes(x = start, y = percent_methylation  )) +
-   geom_point(alpha = 0.6, size = 2) +
-   labs(title = "Lambda",
-        subtitle = "Control DNA unmethylated lambda",
-        x = "Read position",
-        y = "Percentage methylation (%)") +
-   theme_ipsum()
-gg_check(lambda_scatter)
+The frequency of CpG methylation in the λ-bacteriophage genome provides an estimate of the conversion efficiency. This is because the λ-bacteriophage genome is grown in methylase-negative *Escherichia coli*, which cannot methylate cytosines in a CpG context. For example, if the observed CpG methylation frequency in the λ-bacteriophage is 0.2%, the cytosine-to-thymine conversion in the sample is estimated to be 99.8% efficient.
 
-# Histogram of methylation   percentage
-lambda_hist <- ggplot(phage_lambda, aes(x = percent_methylation  )) +
-  geom_histogram(binwidth = 5, fill = "#2ca02c", color = "white") +
-   labs(title = "Methylation frequency lambda",
-        subtitle = "Control DNA unmethylated lambda",
-        x = "Percentage methylation (%)", y = "Frequency") +
-   theme_ipsum()
-gg_check(lambda_hist)
+*(Singer 2019: "A practical guide to the Measurement and analyses of DNA methylation")*
 
-ggsave("~/methylation/Methyl47625/figures/lambda_scatter_plot.png", plot = lambda_scatter, width = 10, height = 6, dpi = 300)
-ggsave("~/methylation/Methyl47625/figures/lambda_hist.plot.png", plot = lambda_hist, width = 10, height = 6, dpi = 300)
-```
+*NEB Tech advice on using CHH and CHG methylation to supplement controls and chrM for testing conversion efficiency:* "If I wanted to judge the conversion efficiency, I would simply look at the lowest methylation you see anywhere. Often it is enough to just look at the methylation levels in a non-CG context (in mammalian systems); otherwise, some people look at reads from the MT, or within CpG islands. If you see a general methylation of 0.3% in a non-CG context, then your conversion efficiency must have been at least 99.7%."
 
-# Conversion efficiency
+```{r Conversion_efficiency}
+# --- Calculate Conversion Efficiency from CpG controls ---
 
-The frequency of CpG methylation in the λ-bacteriophage genome gives an estimate of the conversion efficiency, as the λ-bacteriophage genome is grown in methylase-negative Escherichia coli, which cannot methylate cytosines in CpG context. Thus, for example, if the observed CpG methylation frequency in the λ-bacteriophage is 0.2%, the cytosine-to-thymine conversion in the sample is estimated to be 99.8% efficient (Singer 2019 : Apractical guide to the Measurement and analyses of DNA mmethylation).
+# We will load the CpG file specifically for this calculation and then clear it.
+cpg_data_for_eff <- fread("/home/cgumbi/methylation/refcombined/ABLG-47625_CpG.bedGraph", header = FALSE, col.names = c("chrom", "start", "end", "percent_methylation", "methylated_reads", "unmethylated_reads"))
 
-```{r con_eff_on_labmda}
-# conversion efficiency 
-conv_eff_lambda <- 100 - mean(phage_lambda$percent_methylation  , na.rm = TRUE)
+# Clean the chromosome names and subset for controls
+cpg_data_for_eff$chrom <- gsub("genome_hic_", "", cpg_data_for_eff$chrom)
+cpg_data_for_eff$chrom <- gsub("_RagTag", "", cpg_data_for_eff$chrom)
+
+phage_lambda <- cpg_data_for_eff %>% filter(chrom == "phage_lambda")
+chrM <- cpg_data_for_eff %>% filter(chrom == "OR482510.1")
+
+# Calculate efficiency for lambda
+conv_eff_lambda <- 100 - mean(phage_lambda$percent_methylation, na.rm = TRUE)
 cat("APOBEC Conversion efficiency from phage Lambda:", round(conv_eff_lambda, 2), "%\n")
-#APOBEC Conversion efficiency from phage Lambda: 96.55 %
-```
 
-# Methylation on the mitochondrail genome (chrM)
-
-```{r chrM}
-#average methylation on chrM
-chrM_df <- chrM %>%
-   group_by(chrom) %>%
-   summarize(
-     avg_methylation = mean(percent_methylation, na.rm = TRUE),
-     total_methylated_reads = sum(methylated_reads, na.rm = TRUE),
-     total_unmethylated_reads = sum(unmethylated_reads, na.rm = TRUE),
-     .groups = "drop")
-
-write.csv(chrM_df,"~/methylation/Methyl47625/tables/chrM_methylation_summary.csv", row.names = F) 
-
-# making a scatter plot
-chrM_scatter <- ggplot(chrM, aes(x = start, y = percent_methylation)) +
-   geom_point(alpha = 0.6, size = 2) +
-   labs(title = "CpG methylation on chrM",
-        x = "Read position",
-        y = "Percentage methylation (%)") +
-   theme_ipsum()
-gg_check(chrM_scatter)
- 
-# Histogram of methylation   percentage on chrM
-chrM_hist <- ggplot(chrM, aes(x = percent_methylation  )) +
-   geom_histogram(binwidth = 5, fill = "#d62728", color = "white") +
-   labs(title = "Methylation frequency of chrM", 
-        x = "Percentage methylation (%)",y = "Frequency") + 
-   theme_ipsum()
-gg_check(chrM_hist)
-
-ggsave("~/methylation/Methyl47625/figures/chrM_scatter_plot.png", plot = chrM_scatter, width = 10, height = 6, dpi = 300)
-ggsave("~/methylation/Methyl47625/figures/chrM_hist.plot.png", plot = chrM_hist, width = 10, height = 6, dpi = 300)
-
-```
-
-# Conversion efficiency on chrM
-
-```{r con_eff_on_chrM}
-## conversion efficiency chrM
-conv_eff_chrM <- 100 - mean(chrM$percent_methylation  , na.rm = TRUE)
+# Calculate efficiency for chrM
+conv_eff_chrM <- 100 - mean(chrM$percent_methylation, na.rm = TRUE)
 cat("APOBEC Conversion efficiency from chrM:", round(conv_eff_chrM, 2), "%\n")
-#APOBEC Conversion efficiency from chrM: 96.91 %
-```
 
+# Free up memory
+rm(cpg_data_for_eff, phage_lambda, chrM)
+gc()
 
-# Methylation bias plots with ggplot
+# --- Calculate Conversion Efficiency from non-CpG contexts ---
+# These calculations also require a memory-efficient approach.
 
-```{r mbias_plots}
-puc19_mbias <- ggplot(plasmid_puc19c, aes(x = start, y = percent_methylation)) +
-  geom_line() +
-  labs(title = "Methylation bias plot for pUC19",
-        subtitle = "Control DNA CpG methylated pUC19",
-      x = "Read Position",
-      y = "Percentage methylation (%)") +
-    theme_ipsum()
-gg_check(puc19_mbias)
+# Load and process CHG data for efficiency calculation
+chg_data_for_eff <- fread("/home/cgumbi/methylation/refcombined/ABLG-47625_CHG.bedGraph", header = FALSE, col.names = c("chrom", "start", "end", "percent_methylation", "methylated_reads", "unmethylated_reads"))
+conv_eff_chg <- 100 - mean(chg_data_for_eff$percent_methylation, na.rm = TRUE)
+cat("APOBEC Conversion efficiency from CHG:", round(conv_eff_chg, 2), "%\n")
+rm(chg_data_for_eff)
+gc()
 
-lambda_mbias <- ggplot(phage_lambda, aes(x = start, y = percent_methylation)) +
-  geom_line() +
-  labs(title = "Methylation bias plot for Lambda",
-        subtitle = "Control DNA unmethylated Lambda",
-      x = "Read Position",
-      y = "Percentage methylation (%)") +
-    theme_ipsum()
-gg_check(lambda_mbias)
+# Load and process CHH data for efficiency calculation
+chh_data_for_eff <- fread("/home/cgumbi/methylation/refcombined/ABLG-47625_CHH.bedGraph", header = FALSE, col.names = c("chrom", "start", "end", "percent_methylation", "methylated_reads", "unmethylated_reads"))
+conv_eff_chh <- 100 - mean(chh_data_for_eff$percent_methylation, na.rm = TRUE)
+cat("APOBEC Conversion efficiency from CHH:", round(conv_eff_chh, 2), "%\n")
+rm(chh_data_for_eff)
+gc()
 
-chrM_mbias <- ggplot(chrM, aes(x = start, y = percent_methylation)) +
-  geom_line() +
-  labs(title = "Methylation bias plot for chrM",
-        subtitle = "Control DNA mitochondrial genome",
-      x = "Read Position",
-      y = "Percentage methylation (%)") +
-    theme_ipsum()
-gg_check(chrM_mbias)
-
-ggsave("~/methylation/Methyl47625/figures/chrM_mbias_plot.png", plot = chrM_mbias, width = 10, height = 6, dpi = 300)
-ggsave("~/methylation/Methyl47625/figures/lambda_mbias.plot.png", plot = lambda_mbias, width = 10, height = 6, dpi = 300)
-ggsave("~/methylation/Methyl47625/figures/puc19_mbias.plot.png", plot = puc19_mbias, width = 10, height = 6, dpi = 300)
-```
-
-
-# Looking at conversion efficiency on chg methylation 
-NEB Tech advice on using CHH and CHG methylation to suplement controls amd chrM in tetcing for conversion effciency " If I wanted to judge the conversion efficiency I would simply look at the lowest methylation you see anywhere. Often it is enough to just look at the methylation levels in non-CG context (in mammalian systems), else some people look at reads from the MT, or withing CpG islands. If you see a general methylation of 0.3% in non-CG context, then your conversion efficiency must have been at least 99.7%"
-
-```{r con_eff_on_chg }
-#Remove rows with missing values 
-chg_calls <- na.omit(chg_calls)
-# methylation level summary 
-chg_df <- chg_calls %>%
-   group_by(chrom) %>%
-   summarize(
-     avg_methylation   = mean(percent_methylation  , na.rm = TRUE),
-     total_methylated_reads = sum(methylated_reads, na.rm = TRUE),
-     total_unmethylated_reads = sum(unmethylated_reads, na.rm = TRUE),
-     .groups = "drop")
-
-write.csv(chg_df,"~/methylation/Methyl47625/tables/chg_methylation_summary.csv", row.names = F) 
-
-conv_eff_chg <- 100 - mean(chg_calls$percent_methylation  , na.rm = TRUE)
-cat("APOBEC Conversion efficiency from chrM:", round(conv_eff_chg, 2), "%\n")
-
-```
-
-# Conversion efficiency with chh methylation 
-Here I will apply similar logic as in the chg case above.  
-
-```{r con_eff_on_chh}
-#Remove rows with missing values 
-chh_calls <- na.omit(chh_calls)
-# methylation level summary
-chh_df <- chh_calls %>%
-   group_by(chrom) %>%
-   summarize(
-     avg_methylation   = mean(percent_methylation  , na.rm = TRUE),
-     total_methylated_reads = sum(methylated_reads, na.rm = TRUE),
-     total_unmethylated_reads = sum(unmethylated_reads, na.rm = TRUE),
-     .groups = "drop")
-
-write.csv(chh_df,"~/methylation/Methyl47625/tables/chh_methylation_summary.csv", row.names = F) 
-
-conv_eff_chh <- 100 - mean(chh_calls$percent_methylation  , na.rm = TRUE)
-cat("APOBEC Conversion efficiency from chrM:", round(conv_eff_chh, 2), "%\n")
-```
-
-# Table summary for conversion efficiency 
-
-```{r sum_con_eff}
-con_eff <- data.frame(approach = c("chrM","Lambda", "CHG methylation", "CHH methylation"),
-                      conversion_efficiency = c(96.91, 96.55, 96.25,96.37 ))
+# --- Create and Plot Summary Table ---
+con_eff <- data.frame(
+  approach = c("chrM","Lambda", "CHG methylation", "CHH methylation"),
+  conversion_efficiency = c(conv_eff_chrM, conv_eff_lambda, conv_eff_chg, conv_eff_chh)
+)
 
 con_eff_plot <- ggplot(con_eff, aes(x = approach, y = conversion_efficiency, fill = approach)) +
-  geom_bar(stat = "identity", position = "dodge", width = 0.6) +  # Adjust bar width here
-  labs(title = "APOBEC Conversion efficiency",
-       subtitle = "CHG = 96.25%, CHH = 96.37%, chrM = 96.91%, Lambda = 96.55%", 
-       x = "Approach",
-       y = "Conversion efficiency (%)") +
-  theme_ipsum() + 
-  theme(legend.position = "none",
-        axis.text.x = element_text(angle = 45, hjust = 1))  # rotate labels
-gg_check(con_eff_plot)
+  geom_bar(stat = "identity", position = "dodge", width = 0.6) +
+  labs(
+    title = "APOBEC Conversion efficiency",
+    subtitle = paste0("CHG = ", round(conv_eff_chg, 2), "%, CHH = ", round(conv_eff_chh, 2), "%, chrM = ", round(conv_eff_chrM, 2), "%, Lambda = ", round(conv_eff_lambda, 2), "%"),
+    x = "Approach",
+    y = "Conversion efficiency (%)"
+  ) +
+  theme_ipsum() +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
 
 ggsave("~/methylation/Methyl47625/figures/APOBEC_conversion_efficency_plot.png", plot = con_eff_plot, width = 10, height = 6, dpi = 300)
-write.csv(con_eff,"~/methylation/Methyl47625/tables/APOBEC_conversion_efficiency.csv", row.names = F) 
+write.csv(con_eff,"~/methylation/Methyl47625/tables/APOBEC_conversion_efficiency.csv", row.names= TRUE)
 ```
 
+# Extracting and saving data for control
 
+This code snippet processes each large bedGraph file sequentially to avoid memory issues. It identifies the control chromosomes ("OR482510.1", "plasmid_puc19c", and "phage_lambda") and writes the data for each one into a separate, dedicated CSV file.
 
+```{r Data_for_controls}
+# Define the file paths for the three large bedGraph files
+file_paths <- c(
+  "/home/cgumbi/methylation/refcombined/ABLG-47625_CpG.bedGraph",
+  "/home/cgumbi/methylation/refcombined/ABLG-47625_CHG.bedGraph",
+  "/home/cgumbi/methylation/refcombined/ABLG-47625_CHH.bedGraph"
+)
 
+# A list of the chromosomes we want to subset
+chromosomes_to_subset <- c("OR482510.1", "plasmid_puc19c", "phage_lambda")
 
+# Loop through each large bedGraph file
+for (file_path in file_paths) {
+  # Determine the context (CpG, CHG, or CHH) from the file name
+  context <- sub(".bedGraph", "", basename(file_path))
+  context <- sub("ABLG-47625_", "", context)
+  cat(paste0("Processing ", context, " data...\n"))
 
+  # Read the large file using fread for maximum efficiency
+  raw_data <- fread(file_path, header = FALSE, 
+                      col.names = c("chrom", "start", "end", "percent_methylation", "methylated_reads", "unmethylated_reads"))
 
+  # Clean up chromosome names if this is the CpG file (based on previous scripts)
+  if (context == "CpG") {
+    raw_data$chrom <- gsub("genome_hic_", "", raw_data$chrom)
+    raw_data$chrom <- gsub("_RagTag", "", raw_data$chrom)
+  }
 
+  # Filter the raw data to only keep the chromosomes of interest
+  subset_data <- raw_data %>% filter(chrom %in% chromosomes_to_subset)
+  
+  # Check if any data was found
+  if (nrow(subset_data) == 0) {
+    cat("No data found for control chromosomes in", context, "file.\n")
+    # Clean up and continue to the next file
+    rm(raw_data, subset_data)
+    gc()
+    next
+  }
 
+  # Split the subsetted data into separate data frames based on chromosome name
+  split_by_chrom <- split(subset_data, subset_data$chrom)
 
+  # Loop through the split data frames and save each one to a CSV
+  for (chrom_name in names(split_by_chrom)) {
+    df_to_save <- split_by_chrom[[chrom_name]]
+    
+    # Create a clean file name
+    file_name <- paste0(context, "_", chrom_name, ".csv")
+    full_path <- file.path("~/methylation/Methyl47625/tables/", file_name)
 
+    # Write the data frame to the specified CSV file
+    write.csv(df_to_save, full_path, row.names = FALSE)
+    cat(paste0("Saved data for ", chrom_name, " (", context, ") to ", full_path, "\n"))
+  }
+
+  # Explicitly remove the large raw data and the subsetted data to free up memory
+  rm(raw_data, subset_data, split_by_chrom)
+  gc()
+}
+
+cat("\nProcessing complete. All control data has been extracted and saved.\n")
+
+```
