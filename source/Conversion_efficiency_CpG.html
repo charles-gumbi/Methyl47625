@@ -1812,16 +1812,16 @@ plot_single_chromosome &lt;- function(file_path, chrom_name, title, subtitle, x_
 # Example usage for the scatter plots
 plot_single_chromosome(&quot;/home/cgumbi/methylation/refcombined/ABLG-47625_CpG.bedGraph&quot;, &quot;plasmid_puc19c&quot;, &quot;Plasmid pUC19 Scatter&quot;, &quot;Control DNA CpG methylated pUC19&quot;, &quot;Read position&quot;, &quot;Percentage methylation (%)&quot;)</code></pre>
 <pre><code>##           used (Mb) gc trigger   (Mb)  max used   (Mb)
-## Ncells 1280238 68.4    2132358  113.9   2132358  113.9
-## Vcells 2279571 17.4  618095557 4715.7 965169354 7363.7</code></pre>
+## Ncells 1280304 68.4    2132530  113.9   2132530  113.9
+## Vcells 2280053 17.4  618096000 4715.7 965169836 7363.7</code></pre>
 <pre class="r"><code>plot_single_chromosome(&quot;/home/cgumbi/methylation/refcombined/ABLG-47625_CpG.bedGraph&quot;, &quot;phage_lambda&quot;, &quot;Lambda Scatter&quot;, &quot;Control DNA unmethylated lambda&quot;, &quot;Read position&quot;, &quot;Percentage methylation (%)&quot;)</code></pre>
 <pre><code>##           used (Mb) gc trigger   (Mb)  max used   (Mb)
-## Ncells 1280547 68.4    2132358  113.9   2132358  113.9
-## Vcells 2287818 17.5  494476446 3772.6 965169354 7363.7</code></pre>
+## Ncells 1280613 68.4    2132530  113.9   2132530  113.9
+## Vcells 2288300 17.5  494476800 3772.6 965169836 7363.7</code></pre>
 <pre class="r"><code>plot_single_chromosome(&quot;/home/cgumbi/methylation/refcombined/ABLG-47625_CpG.bedGraph&quot;, &quot;OR482510.1&quot;, &quot;CpG methylation on chrM&quot;, NULL, &quot;Read position&quot;, &quot;Percentage methylation (%)&quot;)</code></pre>
 <pre><code>##           used (Mb) gc trigger   (Mb)  max used   (Mb)
-## Ncells 1280559 68.4    2132358  113.9   2132358  113.9
-## Vcells 2281967 17.5  395581157 3018.1 965169354 7363.7</code></pre>
+## Ncells 1280625 68.4    2132530  113.9   2132530  113.9
+## Vcells 2282449 17.5  395581440 3018.1 965169836 7363.7</code></pre>
 </div>
 </div>
 <div id="conversion-efficiency-calculation" class="section level3">
@@ -1867,8 +1867,8 @@ cat(&quot;APOBEC Conversion efficiency from chrM:&quot;, round(conv_eff_chrM, 2)
 rm(cpg_data_for_eff, phage_lambda, chrM)
 gc()</code></pre>
 <pre><code>##           used (Mb) gc trigger   (Mb)  max used   (Mb)
-## Ncells 1281400 68.5    2132358  113.9   2132358  113.9
-## Vcells 2283447 17.5  316464926 2414.5 965169354 7363.7</code></pre>
+## Ncells 1281466 68.5    2132530  113.9   2132530  113.9
+## Vcells 2283929 17.5  316465152 2414.5 965169836 7363.7</code></pre>
 <pre class="r"><code># --- Calculate Conversion Efficiency from non-CpG contexts ---
 # These calculations also require a memory-efficient approach.
 
@@ -1880,8 +1880,8 @@ cat(&quot;APOBEC Conversion efficiency from CHG:&quot;, round(conv_eff_chg, 2), 
 <pre class="r"><code>rm(chg_data_for_eff)
 gc()</code></pre>
 <pre><code>##           used (Mb) gc trigger   (Mb)  max used   (Mb)
-## Ncells 1281415 68.5    2132358  113.9   2132358  113.9
-## Vcells 2275144 17.4  253171941 1931.6 965169354 7363.7</code></pre>
+## Ncells 1281481 68.5    2132530  113.9   2132530  113.9
+## Vcells 2275626 17.4  253172122 1931.6 965169836 7363.7</code></pre>
 <pre class="r"><code># Load and process CHH data for efficiency calculation
 chh_data_for_eff &lt;- fread(&quot;/home/cgumbi/methylation/refcombined/ABLG-47625_CHH.bedGraph&quot;, header = FALSE, col.names = c(&quot;chrom&quot;, &quot;start&quot;, &quot;end&quot;, &quot;percent_methylation&quot;, &quot;methylated_reads&quot;, &quot;unmethylated_reads&quot;))
 conv_eff_chh &lt;- 100 - mean(chh_data_for_eff$percent_methylation, na.rm = TRUE)
@@ -1890,8 +1890,8 @@ cat(&quot;APOBEC Conversion efficiency from CHH:&quot;, round(conv_eff_chh, 2), 
 <pre class="r"><code>rm(chh_data_for_eff)
 gc()</code></pre>
 <pre><code>##           used (Mb) gc trigger   (Mb)  max used   (Mb)
-## Ncells 1281448 68.5    2132358  113.9   2132358  113.9
-## Vcells 2275196 17.4  414637280 3163.5 965169354 7363.7</code></pre>
+## Ncells 1281514 68.5    2132530  113.9   2132530  113.9
+## Vcells 2275678 17.4  414637743 3163.5 965169836 7363.7</code></pre>
 <pre class="r"><code># --- Create and Plot Summary Table ---
 con_eff &lt;- data.frame(
   approach = c(&quot;chrM&quot;,&quot;Lambda&quot;, &quot;CHG methylation&quot;, &quot;CHH methylation&quot;),
@@ -1993,6 +1993,31 @@ for (file_path in file_paths) {
 <pre class="r"><code>cat(&quot;\nProcessing complete. All control data has been extracted and saved.\n&quot;)</code></pre>
 <pre><code>## 
 ## Processing complete. All control data has been extracted and saved.</code></pre>
+<pre class="r"><code>library(data.table)
+# Path to the file
+file_path &lt;- &quot;~/methylation/refcombined/ABLG-47625.cytosine_report.txt&quot;
+
+#--cytosine_report  A per-base exhaustive report comparable to that produced
+#                  with the same option in Bismark&#39;s methylation extractor. The
+#                  output is a tab-separated file with the following columns:
+#                  chromosome, position (1-based), strand, number of alignments
+#                  supporting methylation, number of alignments supporting
+#                  unmethylation, CG/CHG/CHH, trinucleotide context. This is not
+#                  compatible with --fraction, --counts, --methylKit, or
+#                  --mergeContext. The produces a single file with a
+#                  .cytosine_report.txt extension. Note that even bases with no
+#                  coverage will be included in the output.
+
+
+
+# Defining column names based on MethylDackel documentation
+col_names &lt;- c(&quot;CHROM&quot;, &quot;POS&quot;, &quot;STRAND&quot;, &quot;METHYLATED&quot;, 
+               &quot;UNMETHYLATED&quot;, &quot;CONTEXT&quot;, &quot;TRINUCLEOTIDE&quot;)  # adjust if your file has only 6 columns
+# Read the file
+cytosine_report &lt;- fread(file_path, sep = &quot;\t&quot;, header = FALSE, col.names = col_names, data.table = FALSE)
+# Filter out rows where CHROM contains &quot;genome_hic_scaffold_&quot;
+cytosine_report &lt;- cytosine_report[!grepl(&quot;genome_hic_scaffold_&quot;, cytosine_report$CHROM), ]
+cytosine_report &lt;- cytosine_report[!grepl(&quot;ptg000&quot;, cytosine_report$CHROM), ]</code></pre>
 </div>
 
 
