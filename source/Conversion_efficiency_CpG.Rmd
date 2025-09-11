@@ -273,7 +273,7 @@ cat("\nProcessing complete. All control data has been extracted and saved.\n")
 ```
 
 
-
+# Cytosine report
 
 ```{r Alignment_data}
 library(data.table)
@@ -290,9 +290,6 @@ file_path <- "~/methylation/refcombined/ABLG-47625.cytosine_report.txt"
 #                  --mergeContext. The produces a single file with a
 #                  .cytosine_report.txt extension. Note that even bases with no
 #                  coverage will be included in the output.
-
-
-
 # Defining column names based on MethylDackel documentation
 col_names <- c("CHROM", "POS", "STRAND", "METHYLATED", 
                "UNMETHYLATED", "CONTEXT", "TRINUCLEOTIDE")  # adjust if your file has only 6 columns
@@ -301,6 +298,7 @@ cytosine_report <- fread(file_path, sep = "\t", header = FALSE, col.names = col_
 # Filter out rows where CHROM contains "genome_hic_scaffold_"
 cytosine_report <- cytosine_report[!grepl("genome_hic_scaffold_", cytosine_report$CHROM), ]
 cytosine_report <- cytosine_report[!grepl("ptg000", cytosine_report$CHROM), ]
+write.csv(cytosine_report,"~/methylation/Methyl47625/tables/cytosine_report.csv", row.names= TRUE)
 ```
 
 
