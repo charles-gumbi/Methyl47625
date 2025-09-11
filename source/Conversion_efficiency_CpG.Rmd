@@ -271,3 +271,62 @@ for (file_path in file_paths) {
 cat("\nProcessing complete. All control data has been extracted and saved.\n")
 
 ```
+
+
+
+
+```{r Alignment_data}
+library(data.table)
+# Path to the file
+file_path <- "~/methylation/refcombined/ABLG-47625.cytosine_report.txt"
+
+#--cytosine_report  A per-base exhaustive report comparable to that produced
+#                  with the same option in Bismark's methylation extractor. The
+#                  output is a tab-separated file with the following columns:
+#                  chromosome, position (1-based), strand, number of alignments
+#                  supporting methylation, number of alignments supporting
+#                  unmethylation, CG/CHG/CHH, trinucleotide context. This is not
+#                  compatible with --fraction, --counts, --methylKit, or
+#                  --mergeContext. The produces a single file with a
+#                  .cytosine_report.txt extension. Note that even bases with no
+#                  coverage will be included in the output.
+
+
+
+# Defining column names based on MethylDackel documentation
+col_names <- c("CHROM", "POS", "STRAND", "METHYLATED", 
+               "UNMETHYLATED", "CONTEXT", "TRINUCLEOTIDE")  # adjust if your file has only 6 columns
+# Read the file
+cytosine_report <- fread(file_path, sep = "\t", header = FALSE, col.names = col_names, data.table = FALSE)
+# Filter out rows where CHROM contains "genome_hic_scaffold_"
+cytosine_report <- cytosine_report[!grepl("genome_hic_scaffold_", cytosine_report$CHROM), ]
+cytosine_report <- cytosine_report[!grepl("ptg000", cytosine_report$CHROM), ]
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
