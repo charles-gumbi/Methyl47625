@@ -7,6 +7,17 @@ output:
     df_print: paged
 ---
 
+
+# The Ideal Scenario
+In DNA methylation analysis, the goal is to differentiate between methylated and unmethylated cytosines. The process works by converting unmethylated cytosines to uracil (which is read as thymine during sequencing), while methylated cytosines remain unchanged.
+**Unmethylated Control (Unmethylated Lambda DNA):** This is a DNA sample with no methylated cytosines. After treatment, all unmethylated cytosines should be converted. The conversion efficiency is a measure of how successfully this process occurred. An ideal conversion efficiency would be 100%, but values of 99% or higher are considered excellent. A low conversion efficiency means some unmethylated cytosines weren't converted, leading to an overestimation of methylation in your samples.
+**Methylated Control (CpG-methylated pUC19 DNA):** This is a DNA sample where all cytosines (specifically in a CpG context) have been methylated, typically using an enzyme. After bisulfite treatment, these methylated cytosines should not be converted. The methylation percentage of this control should be close to 100% (e.g., 95-98%). This percentage measures the stability of the methylated cytosines and the effectiveness of the bisulfite treatment in leaving them untouched.
+**Why They Aren't Identical:**While the two values are related and both reflect the quality of the conversion, they are not direct mirrors of each other for several key reasons:
+**Enzymatic vs. Chemical Efficiency:** A methylated control is usually created with an enzyme, and enzymatic methylation is rarely 100% complete. For example, some commercially available methylated controls are stated to be 96-98% methylated. An unmethylated control, like lambda DNA, is naturally unmethylated, so it starts with a 0% methylation baseline. The conversion efficiency for the unmethylated control is a measure of the chemical reaction's success, while the methylation percentage of the methylated control is a measure of both the chemical reaction and the initial enzymatic methylation.
+**Bisulfite Conversion Limitations:** The bisulfite conversion process itself is harsh and can cause some DNA degradation. This can also lead to a slight overestimation of methylation in the unmethylated control, even if conversion is very high. It's common to see a very small methylation percentage (e.g., <1%) in an unmethylated control, which corresponds to a conversion efficiency of >99%.
+**Different Metrics, Same Goal:** In essence, the unmethylated control is used to measure the efficiency of conversion, while the methylated control is used to measure the stability of methylated sites during the conversion process. They are both essential quality control checks for the overall methylation analysis workflow.
+So, while a high methylation percentage in the methylated control and a high conversion efficiency in the unmethylated control are both indicators of a successful experiment, they are measuring slightly different aspects of the process and are not expected to be perfectly complementary (e.g., 98% methylation and 2% conversion inefficiency).
+
 ```{r Loading_packages}
 # Load necessary R packages for data manipulation and visualization
 library(dplyr)
@@ -151,7 +162,32 @@ cpg_data_for_eff$chrom <- gsub("genome_hic_", "", cpg_data_for_eff$chrom)
 cpg_data_for_eff$chrom <- gsub("_RagTag", "", cpg_data_for_eff$chrom)
 
 phage_lambda <- cpg_data_for_eff %>% filter(chrom == "phage_lambda")
+phage_lambda[, total_reads := methylated_reads + unmethylated_reads]
+# Mito genome CpG methylation extraction
 chrM <- cpg_data_for_eff %>% filter(chrom == "OR482510.1")
+chrM[, total_reads := methylated_reads + unmethylated_reads]
+
+#average methylation on chrM
+chrM_df <- chrM %>%
+   group_by(chrom) %>%
+   summarize(
+     avg_methylation = mean(percent_methylation, na.rm = TRUE),
+     total_methylated_reads = sum(methylated_reads, na.rm = TRUE),
+     total_unmethylated_reads = sum(unmethylated_reads, na.rm = TRUE),
+     .groups = "drop")
+
+write.csv(chrM_df,"~/methylation/Methyl47625/tables/Mito_summarized_data.csv", row.names = F) 
+
+#average methylation on chrM
+phage_lambda_df <- phage_lambda %>%
+   group_by(chrom) %>%
+   summarize(
+     avg_methylation = mean(percent_methylation, na.rm = TRUE),
+     total_methylated_reads = sum(methylated_reads, na.rm = TRUE),
+     total_unmethylated_reads = sum(unmethylated_reads, na.rm = TRUE),
+     .groups = "drop")
+
+write.csv(chrM_df,"~/methylation/Methyl47625/tables/Lamda_summarized_data.csv", row.names = F) 
 
 # Calculate efficiency for lambda
 conv_eff_lambda <- 100 - mean(phage_lambda$percent_methylation, na.rm = TRUE)
@@ -162,8 +198,8 @@ conv_eff_chrM <- 100 - mean(chrM$percent_methylation, na.rm = TRUE)
 cat("APOBEC Conversion efficiency from chrM:", round(conv_eff_chrM, 2), "%\n")
 
 # Free up memory
-rm(cpg_data_for_eff, phage_lambda, chrM)
-gc()
+#@rm(cpg_data_for_eff, phage_lambda, chrM)
+#gc()
 
 # --- Calculate Conversion Efficiency from non-CpG contexts ---
 # These calculations also require a memory-efficient approach.
@@ -185,8 +221,7 @@ gc()
 # --- Create and Plot Summary Table ---
 con_eff <- data.frame(
   approach = c("chrM","Lambda", "CHG methylation", "CHH methylation"),
-  conversion_efficiency = c(conv_eff_chrM, conv_eff_lambda, conv_eff_chg, conv_eff_chh)
-)
+  conversion_efficiency = c(conv_eff_chrM, conv_eff_lambda, conv_eff_chg, conv_eff_chh))
 
 con_eff_plot <- ggplot(con_eff, aes(x = approach, y = conversion_efficiency, fill = approach)) +
   geom_bar(stat = "identity", position = "dodge", width = 0.6) +
@@ -269,7 +304,6 @@ for (file_path in file_paths) {
 }
 
 cat("\nProcessing complete. All control data has been extracted and saved.\n")
-
 ```
 
 
@@ -278,7 +312,7 @@ cat("\nProcessing complete. All control data has been extracted and saved.\n")
 ```{r Alignment_data}
 library(data.table)
 # Path to the file
-file_path <- "~/methylation/refcombined/ABLG-47625.cytosine_report.txt"
+file_path <- "~/methylation/refcombined/Lambda_genome.cytosine_report.txt"
 
 #--cytosine_report  A per-base exhaustive report comparable to that produced
 #                  with the same option in Bismark's methylation extractor. The
@@ -294,13 +328,79 @@ file_path <- "~/methylation/refcombined/ABLG-47625.cytosine_report.txt"
 col_names <- c("CHROM", "POS", "STRAND", "METHYLATED", 
                "UNMETHYLATED", "CONTEXT", "TRINUCLEOTIDE")  # adjust if your file has only 6 columns
 # Read the file
-cytosine_report <- fread(file_path, sep = "\t", header = FALSE, col.names = col_names, data.table = FALSE)
+lambda_cytosine_report <- fread(file_path, sep = "\t", header = FALSE, col.names = col_names, data.table = FALSE)
 # Filter out rows where CHROM contains "genome_hic_scaffold_"
-cytosine_report <- cytosine_report[!grepl("genome_hic_scaffold_", cytosine_report$CHROM), ]
-cytosine_report <- cytosine_report[!grepl("ptg000", cytosine_report$CHROM), ]
-write.csv(cytosine_report,"~/methylation/Methyl47625/tables/cytosine_report.csv", row.names= TRUE)
+#cytosine_report <- cytosine_report[!grepl("genome_hic_scaffold_", cytosine_report$CHROM), ]
+#cytosine_report <- cytosine_report[!grepl("ptg000", cytosine_report$CHROM), ]
+write.csv(puc19_cytosine_report,"~/methylation/Methyl47625/tables/Lambda_genome_cytosine_report.csv", row.names= TRUE)
 ```
 
+```{r Sebseting_data}
+library(data.table)
+read_and_subset_large_csv <- function(file_path) {
+  # Efficiently read only the needed columns first
+  dt <- fread(file_path)
+  
+  # Subset for each chrom of interest
+  or482510_data <- dt[chrom == "OR482510.1"]
+  plasmid_puc19c_data <- dt[chrom == "plasmid_puc19c"]
+  phage_lambda_data <- dt[chrom == "phage_lambda"]
+  
+  # Free the main dt to save memory
+  rm(dt)
+  gc()
+  
+  # Return a list with three data.tables
+  return(list(
+    OR482510.1 = or482510_data,
+    plasmid_puc19c = plasmid_puc19c_data,
+    phage_lambda = phage_lambda_data
+  ))
+}
+result <- read_and_subset_large_csv("~/methylation/refcombined/Methylation_all_context.csv")
+
+# lambda all read count report
+or_df <- result$OR482510.1
+or_df[, total_reads := methylated_reads + unmethylated_reads]
+# lambda all read count report
+plasmid_df <- result$plasmid_puc19c
+plasmid_df[, total_reads := methylated_reads + unmethylated_reads]
+# lambda all read count report
+phage_df <- result$phage_lambda
+phage_df[, total_reads := methylated_reads + unmethylated_reads]
+
+write.csv(or_df,"~/methylation/Methyl47625/tables/Mito_genome_reads_counts.csv", row.names= TRUE)
+write.csv(plasmid_df,"~/methylation/Methyl47625/tables/Puc19c_genome_reads_counts.csv", row.names= TRUE)
+write.csv(phage_df,"~/methylation/Methyl47625/tables/Lambda_genome_reads_counts.csv", row.names= TRUE)
+
+
+
+```
+# Dat summary
+```{r Number_of_reads_summeries}
+# This script reads a CSV file, groups the data by the 'context' column,
+# and calculates the sum of the 'methylated_reads' column for each group.
+
+# Load the necessary library for data manipulation.
+# If you don't have dplyr installed, run: install.packages("dplyr")
+library(dplyr)
+
+# Group the data by the 'context' column and then summarize,
+# calculating only the sum of 'methylated_reads'.
+puc19_summarized_data <- plasmid_df %>%
+  group_by(context) %>%
+  summarise(
+    total_reads = sum(total_reads, na.rm = TRUE),
+  )
+
+# Print the resulting summarized data frame.
+print(puc19_summarized_data)
+
+# You can also write the output to a new CSV file.
+write.csv(puc19_summarized_data, "~/methylation/Methyl47625/tables/puc19_methylation_summary.csv", row.names = FALSE)
+
+…
+```
 
 
 
