@@ -6,8 +6,6 @@ output:
   html_document:
     df_print: paged
 ---
-
-
 # The Ideal Scenario
 In DNA methylation analysis, the goal is to differentiate between methylated and unmethylated cytosines. The process works by converting unmethylated cytosines to uracil (which is read as thymine during sequencing), while methylated cytosines remain unchanged.
 **Unmethylated Control (Unmethylated Lambda DNA):** This is a DNA sample with no methylated cytosines. After treatment, all unmethylated cytosines should be converted. The conversion efficiency is a measure of how successfully this process occurred. An ideal conversion efficiency would be 100%, but values of 99% or higher are considered excellent. A low conversion efficiency means some unmethylated cytosines weren't converted, leading to an overestimation of methylation in your samples.
