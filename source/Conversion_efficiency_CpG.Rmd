@@ -311,7 +311,6 @@ cat("\nProcessing complete. All control data has been extracted and saved.\n")
 library(data.table)
 # Path to the file
 file_path <- "~/methylation/refcombined/Lambda_genome.cytosine_report.txt"
-
 #--cytosine_report  A per-base exhaustive report comparable to that produced
 #                  with the same option in Bismark's methylation extractor. The
 #                  output is a tab-separated file with the following columns:
@@ -398,12 +397,8 @@ print(puc19_summarized_data)
 write.csv(puc19_summarized_data, "~/methylation/Methyl47625/tables/puc19_methylation_summary.csv", row.names = FALSE)
 ```
 
-
-
-
 # Per base coverage analysis 
-In methylation anylyses perbase coverage is the same as “read depth”: how many reads cover a single base. Sometimes people say “coverage at this CpG” = 20×.
-
+In methylation analyses per base coverage is the same as “read depth”: how many reads cover a single base. Sometimes people say “coverage at this CpG” = 20×.
 
 ```{r CpG_read_coverage}
 # Load required packages
@@ -472,7 +467,7 @@ write_tsv(mito_summary_table, "~/methylation/Methyl47625/tables/mito_coverage_su
 # Express methylation as weighted averages
 If you simply average percent methylation across all CpGs, low-coverage sites weigh the same as high-coverage ones. A better approach is a coverage-weighted mean
 
-```{r}
+```{r methylation_as_weighted_averages_on_contraols}
 
 # Using `trimws` to remove any leading/trailing whitespace.
 names(lambda_covarage) <- trimws(names(puc19_covarage))
@@ -501,8 +496,54 @@ print(weighted_methylation_by_chrom)
 # For example, to save it as a new CSV file:
 write.csv(weighted_methylation_by_chrom, "~/methylation/Methyl47625/tables/weighted_methylation_pecentage_cpg_data.csv", row.names = FALSE)
 ```
+# Creating a plots for read depth/per base coverage
 
+```{rplots_for_depth_coverage}
+lambda_coverage_plot <- ggplot(lambda_covarage, aes(x = start, y = read_depth)) +
+  geom_point(alpha = 0.5, color = "darkblue") +
+  labs(
+    title = "Read Depth along Phage Lambda Umethylated control",
+    x = "Genomic Position (bp)",
+    y = "Read Depth"
+  ) +
+  theme_ipsum() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    axis.title = element_text(face = "bold")
+  )
+# puc19 methylated control
+puc19_coverage_plot <- ggplot(puc19_covarage, aes(x = start, y = read_depth)) +
+  geom_point(alpha = 0.5, color = "darkblue") +
+  labs(
+    title = "Read Depth along Phage Puc19 Methylated control",
+    x = "Genomic Position (bp)",
+    y = "Read Depth"
+  ) +
+  theme_ipsum() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    axis.title = element_text(face = "bold")
+  )
 
+# Mito genome 
+mito_coverage_plot <- ggplot(mito_covarage, aes(x = start, y = read_depth)) +
+  geom_point(alpha = 0.5, color = "darkblue") +
+  labs(
+    title = "Read Depth along Phage Mito Genome",
+    x = "Genomic Position (bp)",
+    y = "Read Depth"
+  ) +
+  theme_ipsum() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    axis.title = element_text(face = "bold")
+  )
+
+# Save the plot
+ggsave( plot = mito_coverage_plot, "~/methylation/Methyl47625/figures/mito_coverage_plot.png", width = 10, height = 6, dpi = 300)
+ggsave( plot = puc19_coverage_plot, "~/methylation/Methyl47625/figures/puc19_coverage_plot.png", width = 10, height = 6, dpi = 300)
+ggsave( plot = lambda_coverage_plot, "~/methylation/Methyl47625/figures/lambda_coverage_plot.png", width = 10, height = 6, dpi = 300)
+```
 
 
 
