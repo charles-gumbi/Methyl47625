@@ -1,0 +1,4 @@
+"chrom","total_methylated_reads","total_read_depth","weighted_percent_methylation"
+"OR482510.1",13,174,7.47126436781609
+"phage_lambda",72,2052,3.50877192982456
+"plasmid_puc19c",233,240,97.0833333333333
