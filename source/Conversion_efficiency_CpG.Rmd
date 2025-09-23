@@ -329,8 +329,10 @@ lambda_cytosine_report <- fread(file_path, sep = "\t", header = FALSE, col.names
 # Filter out rows where CHROM contains "genome_hic_scaffold_"
 #cytosine_report <- cytosine_report[!grepl("genome_hic_scaffold_", cytosine_report$CHROM), ]
 #cytosine_report <- cytosine_report[!grepl("ptg000", cytosine_report$CHROM), ]
-write.csv(puc19_cytosine_report,"~/methylation/Methyl47625/tables/Lambda_genome_cytosine_report.csv", row.names= TRUE)
+#write.csv(puc19_cytosine_report,"~/methylation/Methyl47625/tables/Lambda_genome_cytosine_report.csv", row.names= TRUE)
 ```
+
+
 
 ```{r Sebseting_data}
 library(data.table)

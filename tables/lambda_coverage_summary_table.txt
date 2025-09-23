@@ -1,0 +1,2 @@
+average_percent_methylation	average_read_depth	average_per_base_coverage
+3.445907269605037	1.1745850028620493	1.1745850028620493
