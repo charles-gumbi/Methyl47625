@@ -1862,16 +1862,16 @@ plot_single_chromosome &lt;- function(file_path, chrom_name, title, subtitle, x_
 # Example usage for the scatter plots
 plot_single_chromosome(&quot;/home/cgumbi/methylation/refcombined/ABLG-47625_CpG.bedGraph&quot;, &quot;plasmid_puc19c&quot;, &quot;Plasmid pUC19 Scatter&quot;, &quot;Control DNA CpG methylated pUC19&quot;, &quot;Read position&quot;, &quot;Percentage methylation (%)&quot;)</code></pre>
 <pre><code>##           used (Mb) gc trigger   (Mb)  max used   (Mb)
-## Ncells 1280638 68.4    2134044  114.0   2134044  114.0
-## Vcells 2283293 17.5  618098987 4715.8 965173087 7363.7</code></pre>
+## Ncells 1280631 68.4    2134008  114.0   2134008  114.0
+## Vcells 2283145 17.5  618098850 4715.8 965172928 7363.7</code></pre>
 <pre class="r"><code>plot_single_chromosome(&quot;/home/cgumbi/methylation/refcombined/ABLG-47625_CpG.bedGraph&quot;, &quot;phage_lambda&quot;, &quot;Lambda Scatter&quot;, &quot;Control DNA unmethylated lambda&quot;, &quot;Read position&quot;, &quot;Percentage methylation (%)&quot;)</code></pre>
 <pre><code>##           used (Mb) gc trigger   (Mb)  max used   (Mb)
-## Ncells 1280947 68.5    2134044  114.0   2134044  114.0
-## Vcells 2291540 17.5  494479190 3772.6 965173087 7363.7</code></pre>
+## Ncells 1280940 68.5    2134008  114.0   2134008  114.0
+## Vcells 2291392 17.5  494479080 3772.6 965172928 7363.7</code></pre>
 <pre class="r"><code>plot_single_chromosome(&quot;/home/cgumbi/methylation/refcombined/ABLG-47625_CpG.bedGraph&quot;, &quot;OR482510.1&quot;, &quot;CpG methylation on chrM&quot;, NULL, &quot;Read position&quot;, &quot;Percentage methylation (%)&quot;)</code></pre>
 <pre><code>##           used (Mb) gc trigger   (Mb)  max used   (Mb)
-## Ncells 1280959 68.5    2134044  114.0   2134044  114.0
-## Vcells 2285689 17.5  395583352 3018.1 965173087 7363.7</code></pre>
+## Ncells 1280952 68.5    2134008  114.0   2134008  114.0
+## Vcells 2285541 17.5  395583264 3018.1 965172928 7363.7</code></pre>
 </div>
 </div>
 <div id="conversion-efficiency-calculation" class="section level3">
@@ -1971,8 +1971,8 @@ cat(&quot;APOBEC Conversion efficiency from CHG:&quot;, round(conv_eff_chg, 2), 
 <pre class="r"><code>rm(chg_data_for_eff)
 gc()</code></pre>
 <pre><code>##            used  (Mb) gc trigger   (Mb)  max used   (Mb)
-## Ncells  1304405  69.7    2134044  114.0   2134044  114.0
-## Vcells 46970369 358.4  316466682 2414.5 965173087 7363.7</code></pre>
+## Ncells  1304398  69.7    2134008  114.0   2134008  114.0
+## Vcells 46970225 358.4  316466612 2414.5 965172928 7363.7</code></pre>
 <pre class="r"><code># Load and process CHH data for efficiency calculation
 chh_data_for_eff &lt;- fread(&quot;/home/cgumbi/methylation/refcombined/ABLG-47625_CHH.bedGraph&quot;, header = FALSE, col.names = c(&quot;chrom&quot;, &quot;start&quot;, &quot;end&quot;, &quot;percent_methylation&quot;, &quot;methylated_reads&quot;, &quot;unmethylated_reads&quot;))
 conv_eff_chh &lt;- 100 - mean(chh_data_for_eff$percent_methylation, na.rm = TRUE)
@@ -1981,8 +1981,8 @@ cat(&quot;APOBEC Conversion efficiency from CHH:&quot;, round(conv_eff_chh, 2), 
 <pre class="r"><code>rm(chh_data_for_eff)
 gc()</code></pre>
 <pre><code>##            used  (Mb) gc trigger (Mb)  max used   (Mb)
-## Ncells  1304438  69.7    2134044  114   2134044  114.0
-## Vcells 46970420 358.4  419295243 3199 965173087 7363.7</code></pre>
+## Ncells  1304431  69.7    2134008  114   2134008  114.0
+## Vcells 46970276 358.4  419295104 3199 965172928 7363.7</code></pre>
 <pre class="r"><code># --- Create and Plot Summary Table ---
 con_eff &lt;- data.frame(
   approach = c(&quot;chrM&quot;,&quot;Lambda&quot;, &quot;CHG methylation&quot;, &quot;CHH methylation&quot;),
@@ -2169,20 +2169,13 @@ or_df</code></pre>
 </div>
 <div id="data-summary" class="section level1">
 <h1>Data summary</h1>
-<pre class="r"><code># This script reads a CSV file, groups the data by the &#39;context&#39; column,
-# and calculates the sum of the &#39;methylated_reads&#39; column for each group.
-
-# Load the necessary library for data manipulation.
-# If you don&#39;t have dplyr installed, run: install.packages(&quot;dplyr&quot;)
-library(dplyr)
-
-# Group the data by the &#39;context&#39; column and then summarize,
+<pre class="r"><code># Group the data by the &#39;context&#39; column and then summarize,
 # calculating only the sum of &#39;methylated_reads&#39;.
 puc19_summarized_data &lt;- plasmid_df %&gt;%
   group_by(context) %&gt;%
   summarise(
     total_reads = sum(total_reads, na.rm = TRUE),
-  )
+    )
 
 # Print the resulting summarized data frame.
 print(puc19_summarized_data)</code></pre>
@@ -2314,9 +2307,6 @@ weighted_methylation_by_chrom &lt;- combined_control_data %&gt;%
     weighted_percent_methylation = (sum(methylated_reads) / sum(read_depth)) * 100,
     .groups = &#39;drop&#39; # This drops the grouping after summarising
   )
-
-# You can also write the combined dataframe to a new file, if needed.
-# For example, to save it as a new CSV file:
 write.csv(weighted_methylation_by_chrom, &quot;~/methylation/Methyl47625/tables/weighted_methylation_pecentage_cpg_data.csv&quot;, row.names = FALSE)
 
 weighted_methylation_by_chrom</code></pre>
@@ -2330,44 +2320,28 @@ weighted_methylation_by_chrom</code></pre>
 <h1>Creating a plots for read depth/per base coverage</h1>
 <pre class="rplots_for_depth_coverage"><code>lambda_coverage_plot &lt;- ggplot(lambda_covarage, aes(x = start, y = read_depth)) +
   geom_point(alpha = 0.5, color = &quot;darkblue&quot;) +
-  labs(
-    title = &quot;Read Depth along Phage Lambda Umethylated control&quot;,
-    x = &quot;Genomic Position (bp)&quot;,
-    y = &quot;Read Depth&quot;
-  ) +
+  labs(title = &quot;Read Depth along Phage Lambda Umethylated control&quot;,
+       x = &quot;Genomic Position (bp)&quot;, y = &quot;Read Depth&quot;) +
   theme_ipsum() +
-  theme(
-    plot.title = element_text(hjust = 0.5, face = &quot;bold&quot;),
-    axis.title = element_text(face = &quot;bold&quot;)
-  )
+  theme(plot.title = element_text(hjust = 0.5, face = &quot;bold&quot;),
+        axis.title = element_text(face = &quot;bold&quot;))
 # puc19 methylated control
 puc19_coverage_plot &lt;- ggplot(puc19_covarage, aes(x = start, y = read_depth)) +
   geom_point(alpha = 0.5, color = &quot;darkblue&quot;) +
-  labs(
-    title = &quot;Read Depth along Phage Puc19 Methylated control&quot;,
-    x = &quot;Genomic Position (bp)&quot;,
-    y = &quot;Read Depth&quot;
-  ) +
+  labs(title = &quot;Read Depth along Phage Puc19 Methylated control&quot;,
+       x = &quot;Genomic Position (bp)&quot;, y = &quot;Read Depth&quot;) +
   theme_ipsum() +
-  theme(
-    plot.title = element_text(hjust = 0.5, face = &quot;bold&quot;),
-    axis.title = element_text(face = &quot;bold&quot;)
-  )
+  theme(plot.title = element_text(hjust = 0.5, face = &quot;bold&quot;),
+    axis.title = element_text(face = &quot;bold&quot;))
 
 # Mito genome 
 mito_coverage_plot &lt;- ggplot(mito_covarage, aes(x = start, y = read_depth)) +
   geom_point(alpha = 0.5, color = &quot;darkblue&quot;) +
-  labs(
-    title = &quot;Read Depth along Phage Mito Genome&quot;,
-    x = &quot;Genomic Position (bp)&quot;,
-    y = &quot;Read Depth&quot;
-  ) +
+  labs(title = &quot;Read Depth along Phage Mito Genome&quot;,
+       x = &quot;Genomic Position (bp)&quot;, y = &quot;Read Depth&quot;) +
   theme_ipsum() +
-  theme(
-    plot.title = element_text(hjust = 0.5, face = &quot;bold&quot;),
-    axis.title = element_text(face = &quot;bold&quot;)
-  )
-
+  theme(plot.title = element_text(hjust = 0.5, face = &quot;bold&quot;),
+        axis.title = element_text(face = &quot;bold&quot;))
 # Save the plot
 ggsave( plot = mito_coverage_plot, &quot;~/methylation/Methyl47625/figures/mito_coverage_plot.png&quot;, width = 10, height = 6, dpi = 300)
 ggsave( plot = puc19_coverage_plot, &quot;~/methylation/Methyl47625/figures/puc19_coverage_plot.png&quot;, width = 10, height = 6, dpi = 300)

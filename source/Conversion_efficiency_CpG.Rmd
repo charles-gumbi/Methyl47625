@@ -379,20 +379,13 @@ plasmid_df
 # Data summary
 
 ```{r Number_of_reads_summeries}
-# This script reads a CSV file, groups the data by the 'context' column,
-# and calculates the sum of the 'methylated_reads' column for each group.
-
-# Load the necessary library for data manipulation.
-# If you don't have dplyr installed, run: install.packages("dplyr")
-library(dplyr)
-
 # Group the data by the 'context' column and then summarize,
 # calculating only the sum of 'methylated_reads'.
 puc19_summarized_data <- plasmid_df %>%
   group_by(context) %>%
   summarise(
     total_reads = sum(total_reads, na.rm = TRUE),
-  )
+    )
 
 # Print the resulting summarized data frame.
 print(puc19_summarized_data)
@@ -472,7 +465,6 @@ mito_summary_table
 If you simply average percent methylation across all CpGs, low-coverage sites weigh the same as high-coverage ones. A better approach is a coverage-weighted mean. Calculating the weighted average methylation percentage for each chromosome. This is a more robust metric than a simple average of percentages, as it accounts for the total number of reads at each site. 
 
 ```{r methylation_as_weighted_averages_on_contraols}
-
 # Using `trimws` to remove any leading/trailing whitespace.
 names(lambda_covarage) <- trimws(names(puc19_covarage))
 # Now we can join the dataframes.
@@ -488,9 +480,6 @@ weighted_methylation_by_chrom <- combined_control_data %>%
     weighted_percent_methylation = (sum(methylated_reads) / sum(read_depth)) * 100,
     .groups = 'drop' # This drops the grouping after summarising
   )
-
-# You can also write the combined dataframe to a new file, if needed.
-# For example, to save it as a new CSV file:
 write.csv(weighted_methylation_by_chrom, "~/methylation/Methyl47625/tables/weighted_methylation_pecentage_cpg_data.csv", row.names = FALSE)
 
 weighted_methylation_by_chrom
@@ -501,44 +490,28 @@ weighted_methylation_by_chrom
 ```{rplots_for_depth_coverage}
 lambda_coverage_plot <- ggplot(lambda_covarage, aes(x = start, y = read_depth)) +
   geom_point(alpha = 0.5, color = "darkblue") +
-  labs(
-    title = "Read Depth along Phage Lambda Umethylated control",
-    x = "Genomic Position (bp)",
-    y = "Read Depth"
-  ) +
+  labs(title = "Read Depth along Phage Lambda Umethylated control",
+       x = "Genomic Position (bp)", y = "Read Depth") +
   theme_ipsum() +
-  theme(
-    plot.title = element_text(hjust = 0.5, face = "bold"),
-    axis.title = element_text(face = "bold")
-  )
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title = element_text(face = "bold"))
 # puc19 methylated control
 puc19_coverage_plot <- ggplot(puc19_covarage, aes(x = start, y = read_depth)) +
   geom_point(alpha = 0.5, color = "darkblue") +
-  labs(
-    title = "Read Depth along Phage Puc19 Methylated control",
-    x = "Genomic Position (bp)",
-    y = "Read Depth"
-  ) +
+  labs(title = "Read Depth along Phage Puc19 Methylated control",
+       x = "Genomic Position (bp)", y = "Read Depth") +
   theme_ipsum() +
-  theme(
-    plot.title = element_text(hjust = 0.5, face = "bold"),
-    axis.title = element_text(face = "bold")
-  )
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+    axis.title = element_text(face = "bold"))
 
 # Mito genome 
 mito_coverage_plot <- ggplot(mito_covarage, aes(x = start, y = read_depth)) +
   geom_point(alpha = 0.5, color = "darkblue") +
-  labs(
-    title = "Read Depth along Phage Mito Genome",
-    x = "Genomic Position (bp)",
-    y = "Read Depth"
-  ) +
+  labs(title = "Read Depth along Phage Mito Genome",
+       x = "Genomic Position (bp)", y = "Read Depth") +
   theme_ipsum() +
-  theme(
-    plot.title = element_text(hjust = 0.5, face = "bold"),
-    axis.title = element_text(face = "bold")
-  )
-
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title = element_text(face = "bold"))
 # Save the plot
 ggsave( plot = mito_coverage_plot, "~/methylation/Methyl47625/figures/mito_coverage_plot.png", width = 10, height = 6, dpi = 300)
 ggsave( plot = puc19_coverage_plot, "~/methylation/Methyl47625/figures/puc19_coverage_plot.png", width = 10, height = 6, dpi = 300)
