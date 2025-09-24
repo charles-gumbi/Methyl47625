@@ -304,7 +304,6 @@ for (file_path in file_paths) {
 cat("\nProcessing complete. All control data has been extracted and saved.\n")
 ```
 
-
 # Cytosine report
 
 ```{r Alignment_data}
@@ -332,7 +331,7 @@ lambda_cytosine_report <- fread(file_path, sep = "\t", header = FALSE, col.names
 #write.csv(puc19_cytosine_report,"~/methylation/Methyl47625/tables/Lambda_genome_cytosine_report.csv", row.names= TRUE)
 ```
 
-
+# Read counts 
 
 ```{r Sebseting_data}
 library(data.table)
@@ -367,15 +366,18 @@ plasmid_df[, total_reads := methylated_reads + unmethylated_reads]
 # lambda all read count report
 phage_df <- result$phage_lambda
 phage_df[, total_reads := methylated_reads + unmethylated_reads]
-
+# save 
 write.csv(or_df,"~/methylation/Methyl47625/tables/Mito_genome_reads_counts.csv", row.names= TRUE)
 write.csv(plasmid_df,"~/methylation/Methyl47625/tables/Puc19c_genome_reads_counts.csv", row.names= TRUE)
 write.csv(phage_df,"~/methylation/Methyl47625/tables/Lambda_genome_reads_counts.csv", row.names= TRUE)
-
-
-
+# print
+or_df
+phage_df
+plasmid_df
 ```
-# Dat summary
+
+# Data summary
+
 ```{r Number_of_reads_summeries}
 # This script reads a CSV file, groups the data by the 'context' column,
 # and calculates the sum of the 'methylated_reads' column for each group.
@@ -428,6 +430,10 @@ ggplot(mito_covarage, aes(x = per_base_coverage)) +
   labs(title = paste("Per CpG coverage distribution for", unique(mito_covarage$chrom)),
        x = "Read coverage (×)", y = "Count of bases") +
   theme_ipsum()
+
+puc19_covarage
+lambda_covarage
+mito_covarage
 ```
 
 # Computing avarage depth and per base coverage 
@@ -439,35 +445,31 @@ puc19_summary_table <- puc19_covarage %>%
     average_percent_methylation = mean(percent_methylation, na.rm = TRUE),
     average_read_depth = mean(read_depth, na.rm = TRUE),
     average_per_base_coverage = mean(per_base_coverage, na.rm = TRUE))
-#Print the summary table
-print(puc19_summary_table)
-
 # Compute averages
 lambda_summary_table <- lambda_covarage %>%
   summarise(
     average_percent_methylation = mean(percent_methylation, na.rm = TRUE),
     average_read_depth = mean(read_depth, na.rm = TRUE),
     average_per_base_coverage = mean(per_base_coverage, na.rm = TRUE))
-#Print the summary table
-print(lambda_summary_table)
-
 # Compute averages
 mito_summary_table <- mito_covarage %>%
   summarise(
     average_percent_methylation = mean(percent_methylation, na.rm = TRUE),
     average_read_depth = mean(read_depth, na.rm = TRUE),
     average_per_base_coverage = mean(per_base_coverage, na.rm = TRUE))
-#Print the summary table
-print(mito_summary_table)
+
 # Save the summary table as a text file (tab-separated)
 write_tsv(lambda_summary_table, "~/methylation/Methyl47625/tables/lambda_coverage_summary_table.txt")
 write_tsv(puc19_summary_table, "~/methylation/Methyl47625/tables/puc19_coverage_summary_table.txt")
 write_tsv(mito_summary_table, "~/methylation/Methyl47625/tables/mito_coverage_summary_table.txt")
+#print tables 
+puc19_summary_table
+lambda_summary_table
+mito_summary_table
 ```
 
-
 # Express methylation as weighted averages
-If you simply average percent methylation across all CpGs, low-coverage sites weigh the same as high-coverage ones. A better approach is a coverage-weighted mean
+If you simply average percent methylation across all CpGs, low-coverage sites weigh the same as high-coverage ones. A better approach is a coverage-weighted mean. Calculating the weighted average methylation percentage for each chromosome. This is a more robust metric than a simple average of percentages, as it accounts for the total number of reads at each site. 
 
 ```{r methylation_as_weighted_averages_on_contraols}
 
@@ -478,10 +480,6 @@ combined_control_data <- bind_rows(lambda_covarage, puc19_covarage, mito_covarag
 #write the combined dataframe to a new file
 write.csv(combined_control_data, "~/methylation/Methyl47625/tables/combined_cpg_control_data.csv", row.names = FALSE)
 
-#Calculate the weighted average methylation percentage for each chromosome.
-# This is a more robust metric than a simple average of percentages, as it
-# accounts for the total number of reads at each site. We group the data
-# by chromosome and then summarize the total methylated and total read depth.
 weighted_methylation_by_chrom <- combined_control_data %>%
   group_by(chrom) %>%
   summarise(
@@ -491,13 +489,13 @@ weighted_methylation_by_chrom <- combined_control_data %>%
     .groups = 'drop' # This drops the grouping after summarising
   )
 
-# Print the resulting summary table.
-print(weighted_methylation_by_chrom)
-
 # You can also write the combined dataframe to a new file, if needed.
 # For example, to save it as a new CSV file:
 write.csv(weighted_methylation_by_chrom, "~/methylation/Methyl47625/tables/weighted_methylation_pecentage_cpg_data.csv", row.names = FALSE)
+
+weighted_methylation_by_chrom
 ```
+
 # Creating a plots for read depth/per base coverage
 
 ```{rplots_for_depth_coverage}
@@ -545,6 +543,10 @@ mito_coverage_plot <- ggplot(mito_covarage, aes(x = start, y = read_depth)) +
 ggsave( plot = mito_coverage_plot, "~/methylation/Methyl47625/figures/mito_coverage_plot.png", width = 10, height = 6, dpi = 300)
 ggsave( plot = puc19_coverage_plot, "~/methylation/Methyl47625/figures/puc19_coverage_plot.png", width = 10, height = 6, dpi = 300)
 ggsave( plot = lambda_coverage_plot, "~/methylation/Methyl47625/figures/lambda_coverage_plot.png", width = 10, height = 6, dpi = 300)
+
+mito_coverage_plot
+lambda_coverage_plot
+puc19_coverage_plot
 ```
 
 
