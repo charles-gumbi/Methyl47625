@@ -525,8 +525,95 @@ lambda_coverage_plot
 puc19_coverage_plot
 ```
 
+# Overall average methylation percentage (weighted by methylated and unmethylated controlgenome size)
 
+```{r control_methylation_percentage_genome_size}
+# Load necessary libraries
+library(readr)
+library(dplyr)
 
+# Function to calculate weighted average methylation
+calculate_weighted_methylation <- function(file_path, genome_size) {
+  # Check if the file exists and is not empty
+  if (!file.exists(file_path) || file.size(file_path) == 0) {
+    message(paste("File not found or is empty:", file_path))
+    # Return an empty tibble with the correct columns to prevent the bind_rows() error
+    return(tibble(
+      control = basename(file_path),
+      genome_size = genome_size,
+      total_methylated_reads = 0,
+      total_unmethylated_reads = 0,
+      average_methylation_percent = 0
+    ))
+  }
+
+  # Read the methylation data file
+  methylation_data <- read_tsv(file_path, col_types = cols())
+
+  # Check if the required columns exist
+  required_cols <- c("methylated_reads", "unmethylated_reads")
+  if (!all(required_cols %in% colnames(methylation_data))) {
+    message(paste("Required columns not found in file:", file_path))
+    return(tibble(
+      control = basename(file_path),
+      genome_size = genome_size,
+      total_methylated_reads = 0,
+      total_unmethylated_reads = 0,
+      average_methylation_percent = 0
+    ))
+  }
+
+  # Calculate the total number of methylated and unmethylated reads
+  total_methylated_reads <- sum(methylation_data$methylated_reads)
+  total_unmethylated_reads <- sum(methylation_data$unmethylated_reads)
+  total_reads <- total_methylated_reads + total_unmethylated_reads
+
+  # Calculate the average methylation
+  average_methylation_percent <- 0
+  if (total_reads > 0) {
+    average_methylation_percent <- (total_methylated_reads / total_reads) * 100
+  }
+
+  # Return the data in a tibble
+  return(tibble(
+    control = basename(file_path),
+    genome_size = genome_size,
+    total_methylated_reads = total_methylated_reads,
+    total_unmethylated_reads = total_unmethylated_reads,
+    average_methylation_percent = average_methylation_percent
+  ))
+}
+
+# Define file paths and genome sizes for the controls
+puc19_file <- "~/methylation/Methyl47625/tables/CpG_plasmid_puc19c.txt"
+lambda_phage_file <- "~/methylation/Methyl47625/tables/CpG_phage_lambda.txt"
+puc19_size <-  2686
+lambda_phage_size <- 48502 
+
+# Calculate methylation for each control
+puc19_methylation <- calculate_weighted_methylation(puc19_file, puc19_size)
+lambda_phage_methylation <- calculate_weighted_methylation(lambda_phage_file, lambda_phage_size)
+
+# Combine the results into a single data frame
+combined_data <- bind_rows(puc19_methylation, lambda_phage_methylation)
+
+# Calculate the overall average methylation, weighted by genome size
+if (sum(combined_data$genome_size) > 0) {
+  combined_data <- combined_data %>%
+    mutate(weight = genome_size / sum(genome_size))
+  overall_weighted_average <- sum(combined_data$average_methylation_percent * combined_data$weight)
+} else {
+  overall_weighted_average <- 0
+}
+
+# Print the final result
+print(paste("Overall average methylation percentage (weighted by genome size):", overall_weighted_average))
+
+# Print individual results as a table for clarity
+print(combined_data)
+```
+
+##The weigted   NEB EM-seq kits include unmethylated lambda DNA and CpG-methylated pUC19 DNA controls to assess the efficiency of the enzymatic conversion process in a methylome analysis experiment. The unmethylated control DNA is used to measure conversion efficiency by determining the percentage of unmethylated cytosines that are converted to uracil, while the methylated control DNA verifies that the enzymatic conversion does not fully methylate all available cytosines, and that the assay reliably detects CpG methylation. 
 
 
 
