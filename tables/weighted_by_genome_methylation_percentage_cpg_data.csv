@@ -1,0 +1,3 @@
+"control","genome_size","total_methylated_reads","total_unmethylated_reads","average_methylation_percent","weight"
+"CpG_plasmid_puc19c.txt",2686,233,7,97.0833333333333,0.0524732359146675
+"CpG_phage_lambda.txt",48502,72,1980,3.50877192982456,0.947526764085333
