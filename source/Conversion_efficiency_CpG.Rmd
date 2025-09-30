@@ -583,7 +583,6 @@ calculate_weighted_methylation <- function(file_path, genome_size) {
     average_methylation_percent = average_methylation_percent
   ))
 }
-
 # Define file paths and genome sizes for the controls
 puc19_file <- "~/methylation/Methyl47625/tables/CpG_plasmid_puc19c.txt"
 lambda_phage_file <- "~/methylation/Methyl47625/tables/CpG_phage_lambda.txt"
@@ -611,13 +610,80 @@ print(paste("Overall average methylation percentage (weighted by genome size):",
 
 # Print individual results as a table for clarity
 print(combined_data)
+
+write.csv(combined_data, "~/methylation/Methyl47625/tables/weighted_by_genome_methylation_percentage_cpg_data.csv", row.names = FALSE)
+
 ```
 
-##The weigted   NEB EM-seq kits include unmethylated lambda DNA and CpG-methylated pUC19 DNA controls to assess the efficiency of the enzymatic conversion process in a methylome analysis experiment. The unmethylated control DNA is used to measure conversion efficiency by determining the percentage of unmethylated cytosines that are converted to uracil, while the methylated control DNA verifies that the enzymatic conversion does not fully methylate all available cytosines, and that the assay reliably detects CpG methylation. 
+##The weigted NEB EM-seq kits include unmethylated lambda DNA and CpG-methylated pUC19 DNA controls to assess the efficiency of the enzymatic conversion process in a methylome analysis experiment. 
+
+### The unmethylated control DNA is used to measure conversion efficiency by determining the percentage of unmethylated cytosines that are converted to uracil, while the methylated control DNA verifies that the enzymatic conversion does not fully methylate all available cytosines, and that the assay reliably detects CpG methylation. 
 
 
+```{r}
+# Load tidyverse
+library(dplyr)
+
+# Input file
+file <- "~/methylation/Methyl47625/tables/CpG_plasmid_puc19c.txt"
+
+# Read table
+df <- read.table(file, header = TRUE, sep = "\t")
+
+# Genome size (plasmid_puc19c is ~2686 bp)
+genome_size <- 48502  
+
+# Define coverage
+observed_cov <- 1.5
+target_cov <- 30
+coverage_factor <- observed_cov / target_cov
+
+# Calculate scaled methylation
+summary_df <- df %>%
+  summarise(
+    mean_percent_methylation = mean(percent_methylation, na.rm = TRUE)
+  ) %>%
+  mutate(
+    genome_size_bp = genome_size,
+    genome_size_Kb = genome_size / 1000,
+    scaled_percent_methylation = (mean_percent_methylation / genome_size_Kb) * coverage_factor
+  )
+
+print(summary_df)
+```
 
 
+```{r}
+# Load tidyverse
+library(dplyr)
+
+# Input file
+file <- "~/methylation/Methyl47625/tables/CpG_phage_lambda.txt"
+
+# Read table
+df <- read.table(file, header = TRUE, sep = "\t")
+
+# Genome size (plasmid_puc19c is ~2686 bp)
+genome_size <- 48  
+
+# Define coverage
+observed_cov <- 1.5
+target_cov <- 30
+coverage_factor <- observed_cov / target_cov
+
+# Calculate scaled methylation
+summary_df <- df %>%
+  summarise(
+    mean_percent_methylation = mean(percent_methylation, na.rm = TRUE)
+  ) %>%
+  mutate(
+    genome_size_bp = genome_size,
+    genome_size_Kb = genome_size / 1000,
+    scaled_percent_methylation = (mean_percent_methylation / genome_size_Kb) * coverage_factor
+  )
+
+print(summary_df)
+```
 
 
 
